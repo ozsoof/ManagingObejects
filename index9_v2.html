@@ -4,7 +4,7 @@
 		<title>three.js webgl - geometry - catmull spline editor</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<link type="text/css" rel="stylesheet" href="main.css">
+		<!-- <link type="text/css" rel="stylesheet" href="main.css"> -->
 		<style>
 			body {
 				background-color: #f0f0f0;
@@ -16,7 +16,8 @@
 		</style>
 	</head>
 	<body>
-
+		<canvas id = "c"></canvas>
+		<div id="labels"></div>
 		<div id="container"></div>
 		<div id="info">
 			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - geometry - catmull spline editor
@@ -26,36 +27,51 @@
 
 			import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/build/three.module.js';
 
-			import Stats from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/libs/stats.module.js';
+			//import Stats from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/libs/stats.module.js';
 			import { GUI } from 'https://threejsfundamentals.org/threejs/../3rdparty/dat.gui.module.js';;
 
 			import { OrbitControls } from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/controls/OrbitControls.js';
 			import { TransformControls } from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/controls/TransformControls.js';
 
-			let container, stats;
+			let container;
 			let camera, scene, renderer;
+			let isShiftDown = false;
 			const HelperObjects = [];
-			let PointsLength = 0;
-			const positions = [];
+			let isReplacementMode = false;
+			let isRemoveMode = false;
+
+			const canvas = document.querySelector('#c');  //0111
+			// const positions = [];
 			const point = new THREE.Vector3();
 
 			const raycaster = new THREE.Raycaster();  
 			const pointer = new THREE.Vector2();  
 			const onUpPosition = new THREE.Vector2();
-			const onDownPosition = new THREE.Vector2();
-            let mouse = new THREE.Vector2();
-                                                    
+			const onDownPosition = new THREE.Vector2();                                                
 
 			const geometry = new THREE.BoxBufferGeometry( 20, 20, 20 );
+			const material = new THREE.MeshLambertMaterial( { color: 0xDC143C } );
 			let transformControl;
+			let rollOverMesh, rollOverMaterial;
 
 			const splines = {};
 
-			const params = {
-				addPoint: addPoint,
-				removePoint: removePoint,
-			};
+			const params = {  // 0111 여기서 메뉴 모드 추가
+				createObject: addObject,
+				removeObject: isRemoveMode,
+				replacement: () => {
+					if(isReplacementMode){
+						isReplacementMode = false;
+						alert('Stop Replacement');
+					} else {
 
+						isReplacementMode = true;
+						alert('Replace Object');
+					}
+					console.log("replacementMode : ",isReplacementMode);  
+				},
+			};
+			
 			init();
 			animate();
 
@@ -65,6 +81,12 @@
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0xf0f0f0 );
+
+
+				// const rollOverGeo = new THREE.BoxBufferGeometry( 20, 20, 20 );
+				// rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.4, transparent: true } );
+				// rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
+				// scene.add( rollOverMesh );
 
 				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
 				camera.position.set( 0, 250, 1000 );
@@ -81,7 +103,7 @@
 				light.shadow.mapSize.width = 1024;
 				light.shadow.mapSize.height = 1024;
 				scene.add( light );
-
+				
 				const planeGeometry = new THREE.PlaneBufferGeometry( 2000, 2000 );
 				planeGeometry.rotateX( - Math.PI / 2 );
 				const planeMaterial = new THREE.ShadowMaterial( { opacity: 0.2 } );
@@ -97,18 +119,19 @@
 				helper.material.transparent = true;
 				scene.add( helper );
 
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer = new THREE.WebGLRenderer( { canvas:canvas, antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.shadowMap.enabled = true;
-				container.appendChild( renderer.domElement );
-
-				stats = new Stats();
-				container.appendChild( stats.dom );
+				//renderer.shadowMap.enabled = true;
+				document.body.appendChild( renderer.domElement );
 
 				const gui = new GUI();
-				gui.add( params, 'addPoint' );
-				gui.add( params, 'removePoint' );
+				gui.add( params, 'createObject' );
+				gui.add( params, 'removeObject' ).onChange(() => {
+             	 	isRemoveMode = isRemoveMode === true ? false : true;
+				});
+				gui.add( params, 'replacement');
+				
 				gui.open();
 
 				// Controls
@@ -132,39 +155,24 @@
 				} );
 
 				document.addEventListener( 'pointerdown', onPointerDown, false );
+				// document.addEventListener( 'pointerdown', onPointerDown, false );
 				document.addEventListener( 'pointerup', onPointerUp, false );
 				document.addEventListener( 'pointermove', onPointerMove, false );
+				document.addEventListener( 'keydown', onDocumentKeyDown, false );
+				document.addEventListener( 'keyup', onDocumentKeyUp, false );
 
-				/*******
-				 * Curves
-				 *********/
-
-				for ( let i = 0; i < PointsLength; i ++ ) {
-
-					addSplineObject( positions[ i ] );
-
-				}
-
-				positions.length = 0;
-
-				for ( let i = 0; i < PointsLength; i ++ ) {
-
-					positions.push( HelperObjects[ i ].position );
-
-				}
-
-				for ( const k in splines ) {
-
-					const spline = splines[ k ];
-					scene.add( spline.mesh );
-
-				}
-
+				window.addEventListener( 'resize', onWindowResize, false ); //0111
+			}
+ 
+			function onWindowResize() {   //0111
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
 			}
 
-			function addSplineObject( position ) {
+			function addObject( position ) {
 
-				const material = new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } );
+				const material = new THREE.MeshLambertMaterial( { color: 0xDC143C } );
 				const object = new THREE.Mesh( geometry, material );
 
 				if ( position ) {
@@ -173,9 +181,12 @@
 
 				} else {
 
+					// object.position.x = Math.random() * 1000 - 500;
+					// object.position.y = Math.random() * 600;
+					// object.position.z = Math.random() * 800 - 400;
 					object.position.x = Math.random() * 1000 - 500;
-					object.position.y = Math.random() * 600;
-					object.position.z = Math.random() * 800 - 400;
+					object.position.y = 300;
+					object.position.z = 100;
 
 				}
 
@@ -187,53 +198,16 @@
 
 			}
 
-			function addPoint() {
-
-				PointsLength ++;
-
-				positions.push( addSplineObject().position );
-
-			}
-
-			function removePoint() {
-
-				if ( PointsLength <= 0 ) {
-					return;
-				}
-
-				const point = HelperObjects.pop();
-				PointsLength --;
-				positions.pop();
-
-				if ( transformControl.object === point ) transformControl.detach();
-				scene.remove( point );
-
-
-			}
-
 			function animate() {
-
 				requestAnimationFrame( animate );
 				render();
-				stats.update();
-
 			}
 
 			function render() {
-
 				renderer.render( scene, camera );
-
-			}
-
-			function onPointerDown( event ) {
-
-				onDownPosition.x = event.clientX;
-				onDownPosition.y = event.clientY;
-
 			}
 
 			function onPointerUp() {
-
 				onUpPosition.x = event.clientX;
 				onUpPosition.y = event.clientY;
 
@@ -243,28 +217,102 @@
 
 			function onPointerMove( event ) {
 
-				pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-				pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+				if(isReplacementMode){
+					event.preventDefault();
+					
+					pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+					pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+					raycaster.setFromCamera( pointer, camera );
+					const intersects = raycaster.intersectObjects( HelperObjects );
+				
+					if ( intersects.length > 0 ) {
 
-				raycaster.setFromCamera( pointer, camera );
-
-				const intersects = raycaster.intersectObjects( HelperObjects );
-
-				if ( intersects.length > 0 ) {
-
-					const object = intersects[ 0 ].object;
-
-					if ( object !== transformControl.object ) {
-
-						transformControl.attach( object );
-
+						// const object = intersects[ 0 ].object;
+						const intersect = intersects[ 0 ];
+						
+						if ( intersect.object !== transformControl.object ) {
+							transformControl.attach( intersect.object );
+						}
+						
 					}
+					
+				} 
+				else {
+				// 	const intersect = intersects[ 0 ];
+				// 	rollOverMesh.position.copy( intersect.point ).add( intersect.face.normal );
+				// 	rollOverMesh.position.divideScalar( 20 ).floor().multiplyScalar( 20 ).addScalar( 10 );
+				// 	render();
+				}
+			}
+
+			function onPointerDown( event ) {
+				console.log(isRemoveMode);
+				if(isRemoveMode){
+					event.preventDefault();
+
+					pointer.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+
+					raycaster.setFromCamera( pointer, camera );
+
+					const intersects = raycaster.intersectObjects( HelperObjects );
+
+					if ( intersects.length > 0 ) {
+
+						const intersect = intersects[ 0 ];
+
+						// delete cube
+
+						if (!isShiftDown ) {
+								scene.remove( intersect.object );
+
+								HelperObjects.splice( HelperObjects.indexOf( intersect.object ), 1 );
+
+						} else {
+							const voxel = new THREE.Mesh( geometry, material );
+							voxel.position.copy( intersect.point ).add( intersect.face.normal );
+							voxel.position.divideScalar( 20 ).floor().multiplyScalar( 20 ).addScalar( 10 );
+							scene.add( voxel );
+
+							HelperObjects.push( voxel );
+						}
+					} 
+				} else {
+
+					onDownPosition.x = event.clientX;
+					onDownPosition.y = event.clientY;
+				}
+					// else {
+
+
+
+					// }
+
+				render();
+
+			}
+
+			
+			function onDocumentKeyDown( event ) {
+
+				switch ( event.keyCode ) {
+
+					case 16: isShiftDown = true; break;
 
 				}
 
 			}
 
+			function onDocumentKeyUp( event ) {
 
+				switch ( event.keyCode ) {
+
+					case 16: isShiftDown = false; break;
+
+				}
+
+			}
+
+			
 		</script>
 
 	</body>
