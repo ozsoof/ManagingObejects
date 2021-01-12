@@ -19,14 +19,13 @@
 		<canvas id = "c"></canvas>
 		<div id="labels"></div>
 		<div id="container"></div>
-		<div id="info">
-			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - geometry - catmull spline editor
+      			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - geometry - catmull spline editor
 		</div>
 
 		<script type="module">
 
 			import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/build/three.module.js';
-
+ 
 			//import Stats from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/libs/stats.module.js';
 			import { GUI } from 'https://threejsfundamentals.org/threejs/../3rdparty/dat.gui.module.js';;
 
@@ -37,8 +36,9 @@
 			let camera, scene, renderer;
 			let isShiftDown = false;
 			const HelperObjects = [];
-			let isReplacementMode = false;
-			let isRemoveMode = false;
+			// let isReplacementMode = false;
+			// let isRemoveMode = false;
+			// let isViewMode = false;
 
 			const canvas = document.querySelector('#c');  //0111
 			// const positions = [];
@@ -53,23 +53,14 @@
 			const material = new THREE.MeshLambertMaterial( { color: 0xDC143C } );
 			let transformControl;
 			let rollOverMesh, rollOverMaterial;
-
-			const splines = {};
+			let controls;
+			let cctvID=1;
 
 			const params = {  // 0111 여기서 메뉴 모드 추가
 				createObject: addObject,
-				removeObject: isRemoveMode,
-				replacement: () => {
-					if(isReplacementMode){
-						isReplacementMode = false;
-						alert('Stop Replacement');
-					} else {
-
-						isReplacementMode = true;
-						alert('Replace Object');
-					}
-					console.log("replacementMode : ",isReplacementMode);  
-				},
+				isViewMode : false,
+				isRemoveMode: false,
+				isReplacementMode: false, 
 			};
 			
 			init();
@@ -81,12 +72,6 @@
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0xf0f0f0 );
-
-
-				// const rollOverGeo = new THREE.BoxBufferGeometry( 20, 20, 20 );
-				// rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.4, transparent: true } );
-				// rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
-				// scene.add( rollOverMesh );
 
 				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
 				camera.position.set( 0, 250, 1000 );
@@ -127,15 +112,32 @@
 
 				const gui = new GUI();
 				gui.add( params, 'createObject' );
-				gui.add( params, 'removeObject' ).onChange(() => {
-             	 	isRemoveMode = isRemoveMode === true ? false : true;
-				});
-				gui.add( params, 'replacement');
+				gui.add( params, 'isViewMode').listen().onChange(() => {
+					// isViewMode = isViewMode ? false : true;
+					params.isRemoveMode = params.isViewMode ? false: params.isRemoveMode;
+					params.isReplacementMode = params.isViewMode ? false: params.isReplacementMode;
+					console.log("replacementMode :", params.isReplacementMode, "remove : ", params.isRemoveMode, "getinfo : ", params.isViewMode);
+					
+				})
+				gui.add( params, 'isRemoveMode' ).listen().onChange(() => {
+					//params.isRemoveMode = params.isRemoveMode ? false : true;
+					params.isViewMode = params.isRemoveMode ? false : params.isViewMode;
+					params.isReplacementMode = params.isRemoveMode ? false : params.isReplacementMode;
+					console.log("replacementMode :", params.isReplacementMode, "remove : ", params.isRemoveMode, "getinfo : ", params.isViewMode);
 				
+				});
+				gui.add( params, 'isReplacementMode').listen().onChange(() => {
+					//      params.isReplacementMode = params.isReplacementMode ? false : true;
+					params.isViewMode = params.isReplacementMode ? false : params.isViewMode;
+             	 	params.isRemoveMode = params.isReplacementMode ? false : params.isRemoveMode;
+					console.log("replacementMode :", params.isReplacementMode, "remove : ", params.isRemoveMode, "getinfo : ", params.isViewMode);
+				
+				});
+
 				gui.open();
 
 				// Controls
-				const controls = new OrbitControls( camera, renderer.domElement );
+				controls = new OrbitControls( camera, renderer.domElement );
 				controls.damping = 0.2;
 				controls.addEventListener( 'change', render );
 
@@ -192,6 +194,8 @@
 
 				object.castShadow = true;
 				object.receiveShadow = true;
+				object.deviceID = "cctv-"+cctvID++;
+
 				scene.add( object );
 				HelperObjects.push( object );
 				return object;
@@ -217,7 +221,7 @@
 
 			function onPointerMove( event ) {
 
-				if(isReplacementMode){
+				if(params.isReplacementMode){
 					event.preventDefault();
 					
 					pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
@@ -246,20 +250,20 @@
 			}
 
 			function onPointerDown( event ) {
-				console.log(isRemoveMode);
-				if(isRemoveMode){
-					event.preventDefault();
+				console.log("isRemoveMode : ", params.isRemoveMode, "isShiftDown :" , isShiftDown);
+				
+				event.preventDefault();
 
-					pointer.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+				pointer.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
 
-					raycaster.setFromCamera( pointer, camera );
+				raycaster.setFromCamera( pointer, camera );
 
-					const intersects = raycaster.intersectObjects( HelperObjects );
+				const intersects = raycaster.intersectObjects( HelperObjects );
+
+				if(params.isRemoveMode){
 
 					if ( intersects.length > 0 ) {
-
 						const intersect = intersects[ 0 ];
-
 						// delete cube
 
 						if (!isShiftDown ) {
@@ -267,7 +271,9 @@
 
 								HelperObjects.splice( HelperObjects.indexOf( intersect.object ), 1 );
 
-						} else {
+						} 
+						else {
+							console.log("isShiftDown")
 							const voxel = new THREE.Mesh( geometry, material );
 							voxel.position.copy( intersect.point ).add( intersect.face.normal );
 							voxel.position.divideScalar( 20 ).floor().multiplyScalar( 20 ).addScalar( 10 );
@@ -275,20 +281,21 @@
 
 							HelperObjects.push( voxel );
 						}
-					} 
+					}
+				} else if (params.isViewMode){
+					if ( intersects.length > 0 ) {
+						const intersect = intersects[ 0 ];
+						controls.enabled = false;
+						alert(intersect.object.deviceID);
+					}
 				} else {
-
+					controls.enabled = true;
 					onDownPosition.x = event.clientX;
 					onDownPosition.y = event.clientY;
 				}
-					// else {
-
-
-
-					// }
 
 				render();
-
+			
 			}
 
 			
