@@ -24,13 +24,13 @@
 
 		<script type="module">
 
-			import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/build/three.module.js';
+			import * as THREE from './three.js/build/three.module.js';
  
 			//import Stats from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/libs/stats.module.js';
-			import { GUI } from 'https://threejsfundamentals.org/threejs/../3rdparty/dat.gui.module.js';;
+			import { GUI } from './node_module/dat.gui/build/dat.gui.module.js';;
 
-			import { OrbitControls } from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/controls/OrbitControls.js';
-			import { TransformControls } from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/controls/TransformControls.js';
+			import { OrbitControls } from './three.js/examples/jsm/controls/OrbitControls.js';
+			import { TransformControls } from './three.js/r122/examples/jsm/controls/TransformControls.js';
 
 			let container;
 			let camera, scene, renderer;
