@@ -24,7 +24,7 @@ function main() {
     function makeCamera(fov = 75){
         const aspect =2;
         const zNear = 0.1;
-        const zFar = 1000;
+        const zFar = 3000;
         
         return new THREE.PerspectiveCamera(fov, aspect, zNear, zFar);
     }
@@ -32,7 +32,7 @@ function main() {
     const camera = makeCamera();
     
    
-    camera.position.set(10, 40, 70)
+    camera.position.set(0, 1000, 900)
     //camera.lookAt(0,0,0);
     {
         const light = new THREE.DirectionalLight(0xffffff,1);
@@ -42,7 +42,7 @@ function main() {
     }
 
     const controls = new OrbitControls(camera, canvas);
-    controls.target.set(0,2,0);
+    controls.target.set(0,50,-20);
     controls.minPolarAngle = 0;
     controls.maxPolarAngle = Math.PI / 2;
     controls.update();
@@ -67,20 +67,20 @@ function main() {
     { 
         const light = new THREE.DirectionalLight(0xffffff, 1);
        
-        light.position.set(0,20,0); 
+        light.position.set(10,80,-70); 
         scene.add(light);
         light.castShadow = false;
-        light.shadow.mapSize.width = 2048;
-        light.shadow.mapSize.height = 2048;
+        // light.shadow.mapSize.width = 2048;
+        // light.shadow.mapSize.height = 2048;
 
-        const d = 50;
-        light.shadow.camera.left = -d;
-        light.shadow.camera.right = d;
-        light.shadow.camera.top = d;
-        light.shadow.camera.bottom = -d;
-        light.shadow.camera.near = 1;
-        light.shadow.camera.far = 50;
-        light.shadow.bias = 0.001;
+        // const d = 50;
+        // light.shadow.camera.left = -d;
+        // light.shadow.camera.right = d;
+        // light.shadow.camera.top = d;
+        // light.shadow.camera.bottom = -d;
+        // light.shadow.camera.near = 1;
+        // light.shadow.camera.far = 50;
+        // light.shadow.bias = 0.001;
     }
 
     {
@@ -88,10 +88,26 @@ function main() {
         light.position.set(10,40,70);
         scene.add(light);
     }
+    {
+        const light = new THREE.DirectionalLight(0xffffff,1);
+        light.position.set(100,40,10);
+        scene.add(light);
+    }
+    {
+        const light = new THREE.DirectionalLight(0xffffff,1);
+        light.position.set(-100,40,10);
+        scene.add(light);
+    }
 
     const ground = new THREE.Object3D();
-    const groundGeometry = new THREE.PlaneBufferGeometry(2000,2000);
+    const groundGeometry = new THREE.PlaneBufferGeometry(1000,1000);
     const groundTexture = loader.load('resources/aroundbuilding.png');
+    const windowTexture = loader.load('resources/Window.png');
+    const sidesTexture = loader.load('resources/sides.png');
+    windowTexture.wrapS = THREE.RepeatWrapping;
+    windowTexture.repeat.set(17,1);
+    
+    const blindTextrue = loader.load('resources/Blind.png');
     //groundTexture.rotation = 0.99;
     const groundMaterial = new THREE.MeshBasicMaterial(
         {map: groundTexture, 
@@ -101,35 +117,92 @@ function main() {
     groundMesh.receiveShadow = false;
     ground.add(groundMesh);
     scene.add(ground);            
-
-    const floor1 = new THREE.Object3D();
-    floor1.position.y = 0;
-    scene.add(floor1);
-
-    const sideGeometry = new THREE.BoxBufferGeometry(0.5, 10, 50); 
-    const sideGeometry2 = new THREE.BoxBufferGeometry(80, 10, 0.5);
-    const sideMaterial = new THREE.MeshPhongMaterial({
-        color: 0x000080,
-        opacity: 0.8, 
+    const sideGeometry = new THREE.BoxBufferGeometry(300, 20, 5); 
+    const sideMaterial = new THREE.MeshBasicMaterial({
+        // color: 0x000080,
+        opacity: 0.7, 
         transparent: true,
-     });
-    const block1_Mesh = new THREE.Mesh(sideGeometry, sideMaterial);
-    block1_Mesh.position.y = 5;
-    block1_Mesh.position.x = 40;
-    const block2_Mesh = new THREE.Mesh(sideGeometry, sideMaterial);
-    block2_Mesh.position.y = 5;
-    block2_Mesh.position.x = -40;
-    const block3_Mesh = new THREE.Mesh(sideGeometry2, sideMaterial);
-    block3_Mesh.position.y = 5;
-    block3_Mesh.position.z = 25;
-    const block4_Mesh = new THREE.Mesh(sideGeometry2, sideMaterial);
-    block4_Mesh.position.y = 5;
-    block4_Mesh.position.z = -25;
-
-    floor1.add(block1_Mesh);
-    floor1.add(block2_Mesh);
-    floor1.add(block3_Mesh);
-    floor1.add(block4_Mesh);
+        map: windowTexture, 
+    });
+    const side2Geometry = new THREE.BoxBufferGeometry(5, 20, 255); 
+    const side2Material = new THREE.MeshBasicMaterial({
+        // color: 0x000080,
+        opacity: 0.7, 
+        transparent: true,
+        map: sidesTexture, 
+    });
+    const layerGeometry = new THREE.BoxBufferGeometry(300,5,250);
+    const layerMaterial = new THREE.MeshBasicMaterial({
+        //color: 0x000080,
+        color: 0x708090,
+        opacity: 0.9, 
+        transparent: true,
+        //map: sidesTexture, 
+    });
+    let i;
+    for(i=0; i< 35; i++){
+        const floor = new THREE.Object3D();
+        floor.position.y = i*20;
+        floor.position.x = -10;
+        floor.position.z = 20;
+        
+        scene.add(floor);
+        const block1_Mesh = new THREE.Mesh(sideGeometry, sideMaterial);
+        block1_Mesh.position.y = 30;
+        block1_Mesh.position.x = -5;
+        block1_Mesh.position.z = 5;
+        block1_Mesh.rotation.y = 3.00;
+        const block2_Mesh = new THREE.Mesh(sideGeometry, sideMaterial);
+        block2_Mesh.position.y = 30;
+        block2_Mesh.position.x = 30;
+        block2_Mesh.position.z = -245;
+        block2_Mesh.rotation.y = 3.00;
+        const block3_Mesh = new THREE.Mesh(side2Geometry, side2Material);
+        block3_Mesh.position.y = 30;
+        block3_Mesh.position.x = 160;
+        block3_Mesh.position.z = -100;
+        block3_Mesh.rotation.y = 3.00;
+        const block4_Mesh = new THREE.Mesh(side2Geometry, side2Material);
+        block4_Mesh.position.y = 30;
+        block4_Mesh.position.x = -135;
+        block4_Mesh.position.z = -142;
+        block4_Mesh.rotation.y = 3.00;
+        const layerMesh = new THREE.Mesh(layerGeometry, layerMaterial);
+        layerMesh.position.y = 20;
+        layerMesh.position.x = 14;
+        layerMesh.position.z = -120;
+        layerMesh.rotation.y = 2.989;
+        layerMesh.rotation.y = 3.0;
+        
+        // const block2_Mesh = new THREE.Mesh(sideGeometry, sideMaterial);
+        // block2_Mesh.position.y = 5;
+        // block2_Mesh.position.x = -40;
+        // const block3_Mesh = new THREE.Mesh(sideGeometry2, sideMaterial);
+        // block3_Mesh.position.y = 5;
+        // block3_Mesh.position.z = 25;
+        // const block4_Mesh = new THREE.Mesh(sideGeometry2, sideMaterial);
+        // block4_Mesh.position.y = 5;
+        // block4_Mesh.position.z = -25;
+        
+        floor.add(block1_Mesh);
+        floor.add(block2_Mesh);
+        floor.add(block3_Mesh);
+        floor.add(block4_Mesh);
+        floor.add(layerMesh);
+    }
+    const layerMesh = new THREE.Mesh(layerGeometry, layerMaterial);
+    layerMesh.position.y = 20;
+    layerMesh.position.x = 14;
+    layerMesh.position.z = -120;
+    layerMesh.rotation.y = 2.989;
+    layerMesh.rotation.y = 3.0;
+    const floor = new THREE.Object3D();
+    floor.add(layerMesh);
+    scene.add(floor);
+    floor.position.y = i*20;
+    floor.position.x = -10;
+    floor.position.z = 20;
+    
 
 
     function resizeRendererToDisplaySize(renderer) {
@@ -150,6 +223,9 @@ function main() {
             camera.aspect = canvas.clientWidth / canvas.clientHeight;
             camera.updateProjectionMatrix();    
         }
+        const speed = 0.2;
+        const rot = time%300 * speed;
+        scene.rotation.y = rot;
         renderer.render(scene, camera);
         requestAnimationFrame(render);
     }
