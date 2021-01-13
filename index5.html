@@ -28,12 +28,13 @@
     <canvas id="c"></canvas>    
     <div id="labels"></div>
     <script type="module">
-        
-        import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/build/three.module.js';
-        import {GUI} from 'https://threejsfundamentals.org/threejs/../3rdparty/dat.gui.module.js';
-        import {OrbitControls} from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/controls/OrbitControls.js';
-        import {OBJLoader2} from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/loaders/OBJLoader2.js';
-    
+
+        import * as THREE from './three.js/build/three.module.js';
+        import { GUI } from './node_modules/dat.gui/build/dat.gui.module.js';;
+        import { OrbitControls } from './three.js/examples/jsm/controls/OrbitControls.js';
+        import { TransformControls } from './three.js/examples/jsm/controls/TransformControls.js';
+        import {OBJLoader} from './three.js/examples/jsm/loaders/OBJLoader.js';
+
         function main() {
 
             const canvas =document.querySelector('#c'); 
@@ -52,7 +53,7 @@
 
             const camera = makeCamera();
             
-           
+        
             camera.position.set(10, 40, 70)
             //camera.lookAt(0,0,0);
             {
@@ -61,7 +62,7 @@
 
                 camera.add(light);
             }
-     
+
             const controls = new OrbitControls(camera, canvas);
             controls.target.set(0,2,0);
             controls.minPolarAngle = 0;
@@ -69,14 +70,14 @@
             controls.update();
 
             
-     
+
             const scene = new THREE.Scene();
             scene.background = new THREE.Color(0xAAAAAA);
 
             
             // const gridHelper = new THREE.GridHelper( 1000, 20 );
             // scene.add( gridHelper );
-     
+
             // {
             //     const objLoader = new OBJLoader2();
             //     objLoader.load('./cctv/camera.obj', (root) => {
@@ -86,7 +87,7 @@
 
             { 
                 const light = new THREE.DirectionalLight(0xffffff, 1);
-               
+            
                 light.position.set(0,20,0); 
                 scene.add(light);
                 light.castShadow = false;
@@ -141,17 +142,17 @@
             const block4_Mesh = new THREE.Mesh(block4_Geometry, sideMaterial);
             block4_Mesh.position.y = 5;
             block4_Mesh.position.z = -25;
- 
+
             const centerGeometry = new THREE.BoxBufferGeometry(80, 0.5, 50);
             const centerMesh = new THREE.Mesh(centerGeometry, sideMaterial);
-                       
+                    
             floor1.add(block1_Mesh);
             floor1.add(block2_Mesh);
             floor1.add(block3_Mesh);
             floor1.add(block4_Mesh);
             // floor1.add(centerMesh);
             scene.add(centerMesh);
-        
+
             const floor2 = new THREE.Object3D();
             floor2.position.y = 20;
             scene.add(floor2);
@@ -166,7 +167,7 @@
             const f2block7_Geometry = new THREE.BoxBufferGeometry(1, 10, 1);
 
             const floor2Geometry = new THREE.BoxBufferGeometry(80, 0.5, 50);
-        
+
             
 
 
@@ -309,7 +310,7 @@
             
             floor3.add(floor3Mesh);
 
-           
+        
             scene.add(floor3Mesh);
 
 
@@ -358,7 +359,7 @@
                         this.pickedObject = intersectedObjects[0].object;
                         this.pickedObjectSavedColor = this.pickedObject.material.emissive.getHex();
                         this.pickedObject.material.emissive.setHex((time * 0.8) % 2 > 1? 0xFFFF00 : 0xFF0000);
-    
+
                     }
                 }
             }
@@ -380,20 +381,20 @@
             gui.add(globals, 'floor3').onChange(showHideDebugInfo);
             gui.add(globals, 'floor2').onChange(showHideDebugInfo);
             gui.add(globals, 'floor1').onChange(showHideDebugInfo);
-          
+        
 
             const labelContainerElem = document.querySelector('#labels');
             function showHideDebugInfo() {
-              labelContainerElem.style.display = globals.moveFloors ? '' : 'none';
-              labelContainerElem.style.display = globals.floor1 ? '' : 'none';
-              labelContainerElem.style.display = globals.floor2 ? '' : 'none';
-              labelContainerElem.style.display = globals.floor3 ? '' : 'none';
-              labelContainerElem.style.display = globals.floor4 ? '' : 'none';
-    
+            labelContainerElem.style.display = globals.moveFloors ? '' : 'none';
+            labelContainerElem.style.display = globals.floor1 ? '' : 'none';
+            labelContainerElem.style.display = globals.floor2 ? '' : 'none';
+            labelContainerElem.style.display = globals.floor3 ? '' : 'none';
+            labelContainerElem.style.display = globals.floor4 ? '' : 'none';
+
             }
             clearPickPosition();
-          
-           
+        
+        
             function render(time) {
                 
                 time *= 0.001; 
@@ -403,7 +404,7 @@
                     camera.aspect = canvas.clientWidth / canvas.clientHeight;
                     camera.updateProjectionMatrix();    
                 }
-               
+            
                 pickHelper.pick(pickPosition, scene, camera, time);
 
                 if(globals.moveFloors && globals.floor1 && globals.floor2 && globals.floor3 && globals.floor4 ){ 
@@ -440,7 +441,7 @@
                 if(!globals.floor3){
                     floor3.position.y = -100;
                     floor3Mesh.position.y = -10;
-             
+            
                 }
                 if(!globals.floor4){
             
@@ -477,7 +478,7 @@
             //window.addEventListener('', () => { moveFloor = false;} );
             // window.addEventListener('mousedown', });
 
- 
+
         }
 
         main();
