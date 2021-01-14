@@ -77,6 +77,7 @@ function main() {
     //texture
     const groundTexture = loader.load('resources/aroundbuilding.png');
     const windowTexture = loader.load('resources/Window.png');
+    const doorTexture = loader.load('resources/Window.png');
     const roofTexture = loader.load('resources/roof.png');
     const sidesTexture = loader.load('resources/sides.png');
     const ciTexture = loader.load('resources/sampleci.png');
@@ -121,7 +122,7 @@ function main() {
             //map: sidesTexture, 
         });
         let i;
-        for(i=0; i< 1; i++){
+        for(i=0; i< 36; i++){
             const floor = new THREE.Object3D();
             floor.position.y = i*20;
             floor.position.x = -10;
@@ -160,7 +161,7 @@ function main() {
             floor.add(block2_Mesh);
             floor.add(block3_Mesh);
             floor.add(block4_Mesh);
-            //floor.add(layerMesh);
+            floor.add(layerMesh);
         }
         const layerMesh = new THREE.Mesh(layerGeometry, layerMaterial);
         layerMesh.position.y = 20;
@@ -214,9 +215,9 @@ function main() {
         frontMesh.position.z = 100;
         frontMesh.rotation.y = 3.0;
         const floor = new THREE.Object3D();
-        // floor.add(roofMesh);
-        // floor.add(ciMesh);
-        // floor.add(layerMesh);
+        floor.add(roofMesh);
+        floor.add(ciMesh);
+        floor.add(layerMesh);
 
 
         //1 floor
@@ -405,7 +406,7 @@ function main() {
         pillar16Mesh.position.x = 115;
         pillar16Mesh.position.z = -206;
         pillar16Mesh.rotation.y = 3.0;
-
+        
         scene.add(pillar1Mesh);
         scene.add(pillar2Mesh);
         scene.add(pillar3Mesh);
@@ -423,15 +424,78 @@ function main() {
         scene.add(pillar15Mesh);
         scene.add(pillar16Mesh);
         
+        //entrance roof  
+        const entranceGeometry = new THREE.BoxBufferGeometry(175, 4, 40); 
+        const entranceMaterial = new THREE.MeshBasicMaterial({
+            // color: 0xA0522D,
+            opacity: 0.8, 
+            transparent: true,
+            map: pillarTexture, 
+        });
+        const entranceMesh = new THREE.Mesh(entranceGeometry, entranceMaterial);
+        entranceMesh.position.y = 18;
+        entranceMesh.position.x = 24;
+        entranceMesh.position.z = -230;
+        entranceMesh.rotation.y = 3.0;
+        const entrance2Mesh = new THREE.Mesh(entranceGeometry, entranceMaterial);
+        entrance2Mesh.position.y = 18;
+        entrance2Mesh.position.x = -14;
+        entrance2Mesh.position.z = 30;
+        entrance2Mesh.rotation.y = 3.0;
+        
+        // door
+        const doorGeometry = new THREE.CylinderBufferGeometry(
+            16,     // top radius
+            16,     // bottom radius
+            10,
+            10,
+            1,
+            false,
+            Math.PI * 2,
+            Math.PI * 2,
+        );
+        const doorMaterial = new THREE.MeshBasicMaterial({
+            // color: 0xDAA520,
+            color: 0xFFD700,
+            opacity: 0.8, 
+            transparent: true,
+            map: doorTexture, 
+        });
+        doorTexture.wrapS = THREE.RepeatWrapping;
+        doorTexture.repeat.set(6,1);
+        const door1Mesh = new THREE.Mesh(doorGeometry, doorMaterial);
+        door1Mesh.position.y = 5;
+        door1Mesh.position.x = -2;
+        door1Mesh.position.z = -4;
+        const door2Mesh = new THREE.Mesh(doorGeometry, doorMaterial);
+        door2Mesh.position.y = 5;
+        door2Mesh.position.x = -63;
+        door2Mesh.position.z = -12;  
+        const door3Mesh = new THREE.Mesh(doorGeometry, doorMaterial);
+        door3Mesh.position.y = 5;
+        door3Mesh.position.x = 59;
+        door3Mesh.position.z = 4;
+        const door4Mesh = new THREE.Mesh(doorGeometry, doorMaterial);
+        door4Mesh.position.y = 5;
+        door4Mesh.position.x = 72;
+        door4Mesh.position.z = -188;
+        const door5Mesh = new THREE.Mesh(doorGeometry, doorMaterial);
+        door5Mesh.position.y = 5;
+        door5Mesh.position.x = 11;
+        door5Mesh.position.z = -197;
+        const door6Mesh = new THREE.Mesh(doorGeometry, doorMaterial);
+        door6Mesh.position.y = 5;
+        door6Mesh.position.x = -49;
+        door6Mesh.position.z = -208;
 
-
-
-
-
-
-
-
-
+        scene.add(door1Mesh);
+        scene.add(door2Mesh);
+        scene.add(door3Mesh);
+        scene.add(door4Mesh);
+        scene.add(door5Mesh);
+        scene.add(door6Mesh);
+        scene.add(entranceMesh);
+        scene.add(entrance2Mesh);
         scene.add(frontMesh);
         scene.add(floor1frontMesh);
         scene.add(floor1backMesh);
@@ -450,10 +514,6 @@ function main() {
         floor.position.x = -10;
         floor.position.z = 20;
        
-
-
-
-
         function resizeRendererToDisplaySize(renderer) {
             const canvas = renderer.domElement;
         const width = canvas.clientWidth;
