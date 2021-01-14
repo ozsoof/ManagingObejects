@@ -82,6 +82,8 @@ function main() {
     const ciTexture = loader.load('resources/sampleci.png');
     const frontTexture = loader.load('resources/frontOfBuilding2.png');
     const bg = loader.load('resources/bluesky.jpeg');
+    const pillarTexture = loader.load('resources/pillar.png');
+
     scene.background = bg;
     windowTexture.wrapS = THREE.RepeatWrapping;
     windowTexture.repeat.set(17,1);
@@ -119,7 +121,7 @@ function main() {
             //map: sidesTexture, 
         });
         let i;
-        for(i=0; i< 36; i++){
+        for(i=0; i< 1; i++){
             const floor = new THREE.Object3D();
             floor.position.y = i*20;
             floor.position.x = -10;
@@ -158,7 +160,7 @@ function main() {
             floor.add(block2_Mesh);
             floor.add(block3_Mesh);
             floor.add(block4_Mesh);
-            floor.add(layerMesh);
+            //floor.add(layerMesh);
         }
         const layerMesh = new THREE.Mesh(layerGeometry, layerMaterial);
         layerMesh.position.y = 20;
@@ -212,9 +214,9 @@ function main() {
         frontMesh.position.z = 100;
         frontMesh.rotation.y = 3.0;
         const floor = new THREE.Object3D();
-        floor.add(roofMesh)
-        floor.add(ciMesh)
-        floor.add(layerMesh);
+        // floor.add(roofMesh);
+        // floor.add(ciMesh);
+        // floor.add(layerMesh);
 
 
         //1 floor
@@ -313,27 +315,123 @@ function main() {
         floor1center4Mesh.position.x = 110;
         floor1center4Mesh.position.z = -13;
         floor1center4Mesh.rotation.y = 3.0;
-        // const floor1rightfrontMesh = new THREE.Mesh(floor1sideGeometry,floor1sideMaterial);
-        // floor1rightfrontMesh.position.y = 10;
-        // floor1rightfrontMesh.position.x = 91;
-        // floor1rightfrontMesh.position.z = -2;
-        // floor1rightfrontMesh.rotation.y = 3.0;
-        // const floor1leftbackMesh = new THREE.Mesh(floor1sideGeometry,floor1sideMaterial);
-        // floor1leftbackMesh.position.y = 10;
-        // floor1leftbackMesh.position.x = -81;
-        // floor1leftbackMesh.position.z = -198;
-        // floor1leftbackMesh.rotation.y = 3.0;
-        // const floor1rightbackMesh = new THREE.Mesh(floor1sideGeometry,floor1sideMaterial);
-        // floor1rightbackMesh.position.y = 10;
-        // floor1rightbackMesh.position.x = 116;
-        // floor1rightbackMesh.position.z = -170;
-        // floor1rightbackMesh.rotation.y = 3.0;
         
         
+        // pillar
+        const pillarGeometry = new THREE.BoxBufferGeometry(10, 20, 10); 
+        const pillarMaterial = new THREE.MeshBasicMaterial({
+            // color: 0xA0522D,
+            opacity: 0.7, 
+            transparent: true,
+            map: pillarTexture, 
+        });
+        const pillar1Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar1Mesh.position.y = 10;
+        pillar1Mesh.position.x = 149;
+        pillar1Mesh.position.z = -130;
+        pillar1Mesh.rotation.y = 3.0;
+        const pillar2Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar2Mesh.position.y = 10;
+        pillar2Mesh.position.x = 136;
+        pillar2Mesh.position.z = -30;
+        pillar2Mesh.rotation.y = 3.0;
+        const pillar3Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar3Mesh.position.y = 10;
+        pillar3Mesh.position.x = 160;
+        pillar3Mesh.position.z = -200;
+        pillar3Mesh.rotation.y = 3.0;
+        const pillar4Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar4Mesh.position.y = 10;
+        pillar4Mesh.position.x = 126;
+        pillar4Mesh.position.z = 38;
+        pillar4Mesh.rotation.y = 3.0;
+        const pillar5Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar5Mesh.position.y = 10;
+        pillar5Mesh.position.x = 78;
+        pillar5Mesh.position.z = 32;
+        pillar5Mesh.rotation.y = 3.0;
+        const pillar6Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar6Mesh.position.y = 10;
+        pillar6Mesh.position.x = 30;
+        pillar6Mesh.position.z = 25;
+        pillar6Mesh.rotation.y = 3.0;
+        const pillar7Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar7Mesh.position.y = 10;
+        pillar7Mesh.position.x = -40;
+        pillar7Mesh.position.z = 15;
+        pillar7Mesh.rotation.y = 3.0;
+        const pillar8Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar8Mesh.position.y = 10;
+        pillar8Mesh.position.x = -105;
+        pillar8Mesh.position.z = 5;
+        pillar8Mesh.rotation.y = 3.0;
+        const pillar9Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar9Mesh.position.y = 10;
+        pillar9Mesh.position.x = -147;
+        pillar9Mesh.position.z = -2;
+        pillar9Mesh.rotation.y = 3.0;
+        const pillar10Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar10Mesh.position.y = 10;
+        pillar10Mesh.position.x = -138;
+        pillar10Mesh.position.z = -73;
+        pillar10Mesh.rotation.y = 3.0;
+        const pillar11Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar11Mesh.position.y = 10;
+        pillar11Mesh.position.x = -125;
+        pillar11Mesh.position.z = -172;
+        pillar11Mesh.rotation.y = 3.0;
+        const pillar12Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar12Mesh.position.y = 10;
+        pillar12Mesh.position.x = -115;
+        pillar12Mesh.position.z = -238;
+        pillar12Mesh.rotation.y = 3.0;
+        const pillar13Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar13Mesh.position.y = 10;
+        pillar13Mesh.position.x = -70;
+        pillar13Mesh.position.z = -232;
+        pillar13Mesh.rotation.y = 3.0;
+        const pillar14Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar14Mesh.position.y = 10;
+        pillar14Mesh.position.x = -10;
+        pillar14Mesh.position.z = -224;
+        pillar14Mesh.rotation.y = 3.0;
+        const pillar15Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar15Mesh.position.y = 10;
+        pillar15Mesh.position.x = 60;
+        pillar15Mesh.position.z = -214;
+        pillar15Mesh.rotation.y = 3.0;
+        const pillar16Mesh = new THREE.Mesh(pillarGeometry,pillarMaterial);
+        pillar16Mesh.position.y = 10;
+        pillar16Mesh.position.x = 115;
+        pillar16Mesh.position.z = -206;
+        pillar16Mesh.rotation.y = 3.0;
+
+        scene.add(pillar1Mesh);
+        scene.add(pillar2Mesh);
+        scene.add(pillar3Mesh);
+        scene.add(pillar4Mesh);
+        scene.add(pillar5Mesh);
+        scene.add(pillar6Mesh);
+        scene.add(pillar7Mesh);
+        scene.add(pillar8Mesh);
+        scene.add(pillar9Mesh);
+        scene.add(pillar10Mesh);
+        scene.add(pillar11Mesh);
+        scene.add(pillar12Mesh);
+        scene.add(pillar13Mesh);
+        scene.add(pillar14Mesh);
+        scene.add(pillar15Mesh);
+        scene.add(pillar16Mesh);
         
-        
-        
-        
+
+
+
+
+
+
+
+
+
         scene.add(frontMesh);
         scene.add(floor1frontMesh);
         scene.add(floor1backMesh);
@@ -351,39 +449,7 @@ function main() {
         floor.position.y = i*20;
         floor.position.x = -10;
         floor.position.z = 20;
-        
-
-// pillar
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+       
 
 
 
@@ -408,7 +474,7 @@ function main() {
         }
         const speed = 0.2;
         const rot = time%300 * speed;
-        scene.rotation.y = rot;
+        //scene.rotation.y = rot;
         renderer.render(scene, camera);
         requestAnimationFrame(render);
     }
