@@ -24,7 +24,7 @@ function main() {
     function makeCamera(fov = 75){
         const aspect =2;
         const zNear = 0.1;
-        const zFar = 3000;
+        const zFar = 4000;
         
         return new THREE.PerspectiveCamera(fov, aspect, zNear, zFar);
     }
@@ -102,14 +102,14 @@ function main() {
         const sideGeometry = new THREE.BoxBufferGeometry(300, 20, 5); 
         const sideMaterial = new THREE.MeshBasicMaterial({
             // color: 0x000080,
-            opacity: 0.45, 
+            opacity: 0.4, 
             transparent: true,
             map: windowTexture, 
         });
         const side2Geometry = new THREE.BoxBufferGeometry(5, 20, 255); 
         const side2Material = new THREE.MeshBasicMaterial({
             // color: 0x000080,
-            opacity: 0.45, 
+            opacity: 0.4, 
             transparent: true,
             map: sidesTexture, 
         });
@@ -117,7 +117,7 @@ function main() {
         const layerMaterial = new THREE.MeshBasicMaterial({
             //color: 0x000080,
             color: 0x708090,
-            opacity: 0.7, 
+            opacity: 0.6, 
             transparent: true,
             //map: sidesTexture, 
         });
@@ -534,7 +534,7 @@ function main() {
         }
         const speed = 0.2;
         const rot = time%300 * speed;
-        //scene.rotation.y = rot;
+        scene.rotation.y = rot;
         renderer.render(scene, camera);
         requestAnimationFrame(render);
     }
