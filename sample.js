@@ -4,9 +4,20 @@ import * as THREE from './three.js/build/three.module.js';
 import { GUI } from './node_modules/dat.gui/build/dat.gui.module.js';;
 import { OrbitControls } from './three.js/examples/jsm/controls/OrbitControls.js';
 import { TransformControls } from './three.js/examples/jsm/controls/TransformControls.js';
-import {OBJLoader} from './three.js/examples/jsm/loaders/OBJLoader.js';
+import { OBJLoader } from './three.js/examples/jsm/loaders/OBJLoader.js';
 
 function main() {
+    
+    let isShiftDown = false;
+    const HelperObjects = [];
+    const point = new THREE.Vector3();
+    const raycaster = new THREE.Raycaster();  
+    const pointer = new THREE.Vector2();  
+    const onUpPosition = new THREE.Vector2();
+    const onDownPosition = new THREE.Vector2();                                                
+    
+    let transformControl;
+    let cctvID=1;  // 임시 test   
 
     const canvas =document.querySelector('#c'); 
     const renderer = new THREE.WebGLRenderer({
@@ -15,32 +26,31 @@ function main() {
         antialias: true,
     });
     const loader = new THREE.TextureLoader();
-
+    
     const gui = new GUI();
-
-    function makeCamera(fov = 75){
+    
+    const makeCamera = (fov=75) => {
         const aspect =2;
         const zNear = 0.1;
         const zFar = 4000;
-        
         return new THREE.PerspectiveCamera(fov, aspect, zNear, zFar);
     }
     const camera = makeCamera();
     camera.position.set(0, 1000, 900)
     camera.lookAt(0,0,0);
+    
     {
         const light = new THREE.DirectionalLight(0xffffff,1);
         light.position.set(2,2,4);
-
         camera.add(light);
     }
-
+    
     const controls = new OrbitControls(camera, canvas);
     controls.target.set(0,50,-20);
     controls.minPolarAngle = 0;
     controls.maxPolarAngle = Math.PI / 2;
     controls.update();
-
+    
     const scene = new THREE.Scene();    
     { 
         const light = new THREE.DirectionalLight(0xffffff, 1);
@@ -63,9 +73,6 @@ function main() {
         scene.add(light);
     }
     
-    const ground = new THREE.Object3D();
-    const groundGeometry = new THREE.PlaneBufferGeometry(1000,1000);
-    
     const bg = loader.load('resources/bluesky.jpeg');
     const groundTexture = loader.load('resources/aroundbuilding.png');
     const windowTexture = loader.load('resources/Window.png');
@@ -78,20 +85,23 @@ function main() {
     const blindTextrue = loader.load('resources/Blind.png');
     const floor1Texture = loader.load('resources/Window.png');
     
+    const ground = new THREE.Object3D();
+    
     scene.background = bg;
     windowTexture.wrapS = THREE.RepeatWrapping;
     windowTexture.repeat.set(17,1);
     
+    const groundGeometry = new THREE.PlaneBufferGeometry(1000,1000);
     const groundMaterial = new THREE.MeshBasicMaterial({
         map: groundTexture, 
     });
     const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
     groundMesh.rotation.x = Math.PI * -.5;
     groundMesh.receiveShadow = false;
-   
+    
     ground.add(groundMesh);
     scene.add(ground);            
-   
+    
     const sideGeometry = new THREE.BoxBufferGeometry(300, 20, 5); 
     const sideMaterial = new THREE.MeshBasicMaterial({
         // color: 0x000080,
@@ -345,7 +355,7 @@ function main() {
     const door1Mesh = new THREE.Mesh(doorGeometry, doorMaterial);
     door1Mesh.position.y = 5;
     door1Mesh.position.x = -2;
-    door1Mesh.position.z = -4;
+    door1Mesh.position.z = -4;''
     const door2Mesh = new THREE.Mesh(doorGeometry, doorMaterial);
     door2Mesh.position.y = 5;
     door2Mesh.position.x = -63;
@@ -519,19 +529,64 @@ function main() {
             
     console.log(floors);
 
+    const addObject = (position) => {
+        const deviceGeometry = new THREE.BoxBufferGeometry( 20, 20, 20 );
+        const deviceMaterial = new THREE.MeshBasicMaterial( {color:0xDC143C });
+        const object = new THREE.Mesh( deviceGeometry, deviceMaterial);
+
+        if (position) {
+            object.position.copy(position);
+        } else {
+            object.position.x = Math.random() * 1000-500;
+            object.position.y = 300;
+            object.position.z = 100;
+        }
+        object.deviceID = "cctv-"+cctvID++;
+        scene.add(object); // 여기를 수정해야해 
+        HelperObjects.push(object);
+        return object;
+    };
+
+    const controllerParams = {  // controller parameters
+        createObject: addObject,
+        isViewMode : false,
+        isRemoveMode: false,
+        isReplacementMode: false, 
+    };
+
     let floorList = gui.addFolder('floors');
-    // let test = {name: 'test'};
-    // floorList.add(test, 'name');
+    let controller = gui.addFolder('controller');
+
     let params = {};
     floors.map((floor, idx)=> {
         const name = "floor" + (idx+1);
         params = { ...params,
-                   [name]:false,
+            [name]:false,
         };
     });
     
+    controller.add(controllerParams, 'createObject');
+    controller.add(controllerParams, 'isViewMode').listen().onChange(() => {
+        controllerParams.isRemoveMode = controllerParams.isViewMode ? 
+            false: controllerParams.isRemoveMode;
+        controllerParams.isReplacementMode = controllerParams.isViewMode ? 
+            false: controllerParams.isReplacementMode;
+    })
+    controller.add(controllerParams, 'isRemoveMode').listen().onChange(() => {
+        controllerParams.isViewMode = controllerParams.isRemoveMode ? 
+            false : controllerParams.isViewMode;
+        controllerParams.isReplacementMode = controllerParams.isRemoveMode ? 
+            false : controllerParams.isReplacementMode;
+    });
+    controller.add(controllerParams, 'isReplacementMode').listen().onChange(() => {
+        controllerParams.isViewMode = controllerParams.isReplacementMode ? 
+            false : controllerParams.isViewMode;
+        controllerParams.isRemoveMode = controllerParams.isReplacementMode ? 
+            false : controllerParams.isRemoveMode;
+    });
+    
     let detailinfo;
-
+    
     for(const key in params){
         floorList.add(params, key).listen().onChange(()=>{
             for(const key2 in params){
@@ -539,11 +594,27 @@ function main() {
                     params[key2] = params[key] ? false : params[key2];
                 }
             } 
-            detailinfo = selectedFloor();
+            detailinfo = getSelectedFloor();
         });
     };
-    
-    function resizeRendererToDisplaySize(renderer) {
+
+    // add EventListeners
+    // controls.addEventListener('change', render);
+    transformControl = new TransformControls( camera, renderer.domElement );
+    transformControl.addEventListener( 'change', render );
+    transformControl.addEventListener( 'dragging-changed', function ( event ) {
+
+        controls.enabled = ! event.value;
+
+    } );
+    scene.add( transformControl );
+    document.addEventListener( 'pointerdown', onPointerDown, false );
+    document.addEventListener( 'pointerup', onPointerUp, false );
+    document.addEventListener( 'pointermove', onPointerMove, false );
+    // document.addEventListener( 'keydown', onDocumentKeyDown, false );
+    // document.addEventListener( 'keyup', onDocumentKeyUp, false );
+
+    const resizeRendererToDisplaySize = (renderer) => {
         const canvas = renderer.domElement;
         const width = canvas.clientWidth;
         const height = canvas.clientHeight;
@@ -552,9 +623,9 @@ function main() {
             renderer.setSize(width, height, false);
         }
         return needResize;
-    }
+    };
 
-    const selectedFloor = () => {
+    const getSelectedFloor = () => {
         for (const key in params){
             if(params[key]===true){
                 for (const idx in floors){
@@ -566,6 +637,83 @@ function main() {
         }
     };
 
+    function onPointerUp( event ) {
+        onUpPosition.x = event.clientX;
+        onUpPosition.y = event.clientY;
+        if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) transformControl.detach();
+    }
+
+    function onPointerMove( event ) {
+        if(params.isReplacementMode){
+            event.preventDefault();   
+            pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+            pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+            raycaster.setFromCamera( pointer, camera );
+            const intersects = raycaster.intersectObjects( HelperObjects );
+        
+            if ( intersects.length > 0 ) {
+                // const object = intersects[ 0 ].object;
+                const intersect = intersects[ 0 ];
+                
+                if ( intersect.object !== transformControl.object ) {
+                    transformControl.attach( intersect.object );
+                }   
+            }  
+        } 
+    }
+
+    function onPointerDown( event ) {
+     
+        event.preventDefault();
+    
+        pointer.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+    
+        raycaster.setFromCamera( pointer, camera );
+    
+        const intersects = raycaster.intersectObjects( HelperObjects );
+    
+        if(params.isRemoveMode){
+    
+            if ( intersects.length > 0 ) {
+                const intersect = intersects[ 0 ];
+                if (!isShiftDown ) {
+                    scene.remove( intersect.object );
+                    HelperObjects.splice( HelperObjects.indexOf( intersect.object ), 1 );
+                } 
+                else {
+                    console.log("isShiftDown")
+                    const voxel = new THREE.Mesh( geometry, material );
+                    voxel.position.copy( intersect.point ).add( intersect.face.normal );
+                    voxel.position.divideScalar( 20 ).floor().multiplyScalar( 20 ).addScalar( 10 );
+                    scene.add( voxel );
+                    HelperObjects.push( voxel );
+                }
+            }
+        } else if (params.isViewMode){
+            if ( intersects.length > 0 ) {
+                const intersect = intersects[ 0 ];
+                controls.enabled = false;
+                alert(intersect.object.deviceID);
+            }
+        } else {
+            
+            onDownPosition.x = event.clientX;
+            onDownPosition.y = event.clientY;
+        }
+        render();
+    }
+
+    // function onDocumentKeyDown( event ) {
+    //     switch ( event.keyCode ) {
+    //         case 16: isShiftDown = true; break;
+    //     }
+    // }
+    // function onDocumentKeyUp( event ) {
+    //     switch ( event.keyCode ) {
+    //         case 16: isShiftDown = false; break;
+    //     }
+    // }
+
     function render(time) {
         time *= 0.001; 
         if(resizeRendererToDisplaySize(renderer)){ 
@@ -573,17 +721,23 @@ function main() {
             camera.aspect = canvas.clientWidth / canvas.clientHeight;
             camera.updateProjectionMatrix();    
         }
-        const speed = 0.2;
+        const speed = 0.02;
         const rot = time%300 * speed;
         for(const idx in floors){
             floors[idx].position.x = -10;
         }
         if(detailinfo !== undefined ){
             floors[detailinfo].position.x = 300;
+            scene.rotation.y = 0;
+        } else {
+            if(controllerParams.isViewMode || controllerParams.isReplacementMode 
+                || controllerParams.isRemoveMode){
+                scene.rotation.y = 0;
+            } else {
+                scene.rotation.y = rot;
+            }
         }
-       
-        // scene.rotation.y = rot;
-      
+        
         renderer.render(scene, camera);
         requestAnimationFrame(render);
     }

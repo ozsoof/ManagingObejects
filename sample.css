@@ -11,17 +11,3 @@ body {
   display: block;
   z-index: -1;
 }
-/* .diagram {
-  display: inline-block;
-  width: 5em;
-  height: 3em;
-  border: 1px solid black;
-}
-.left {
-  float: left;
-  margin-right: 0.25em;
-}
-.right {
-  float: right;
-  margin-left: 0.25em;
-} */
