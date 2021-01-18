@@ -4,7 +4,8 @@ import * as THREE from './three.js/build/three.module.js';
 import { GUI } from './node_modules/dat.gui/build/dat.gui.module.js';;
 import { OrbitControls } from './three.js/examples/jsm/controls/OrbitControls.js';
 import { TransformControls } from './three.js/examples/jsm/controls/TransformControls.js';
-import { OBJLoader } from './three.js/examples/jsm/loaders/OBJLoader.js';
+import { GLTFLoader } from './three.js/examples/jsm/loaders/GLTFLoader.js';
+import { GLTFExporter } from './three.js/examples/jsm/exporters/GLTFExporter.js';
 
 function main() {
     
@@ -14,7 +15,8 @@ function main() {
     const raycaster = new THREE.Raycaster();  
     const pointer = new THREE.Vector2();  
     const onUpPosition = new THREE.Vector2();
-    const onDownPosition = new THREE.Vector2();                                                
+    const onDownPosition = new THREE.Vector2(); 
+    // const exporter = new GLTFExporter();                                               
     
     let transformControl;
     let cctvID=1;  // 임시 test   
@@ -49,7 +51,9 @@ function main() {
     controls.target.set(0,50,-20);
     controls.minPolarAngle = 0;
     controls.maxPolarAngle = Math.PI / 2;
-    controls.update();
+    controls.enableDamping=true;
+    // controls.update();
+    controls.addEventListener('change', requestRenderIfNotRequested);
     
     const scene = new THREE.Scene();    
     { 
@@ -95,6 +99,13 @@ function main() {
     const groundMaterial = new THREE.MeshBasicMaterial({
         map: groundTexture, 
     });
+    
+    const helper = new THREE.GridHelper( 1000, 100 );
+    helper.position.y = 1;
+    helper.material.opacity = 0.2;
+    helper.material.transparent = true;
+    scene.add( helper );
+
     const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
     groundMesh.rotation.x = Math.PI * -.5;
     groundMesh.receiveShadow = false;
@@ -122,7 +133,7 @@ function main() {
         color: 0x708090,
         opacity: 0.6, 
         transparent: true,
-        //map: sidesTexture, 
+        map: sidesTexture, 
     });
     
     let i;
@@ -381,7 +392,7 @@ function main() {
     const frontMaterial = new THREE.MeshBasicMaterial({
         color: 0xffffff,
         // opacity: 1, 
-        //transparent: true,
+        // transparent: true,
         map: frontTexture, 
     });
     frontTexture.repeat.set(1,1);
@@ -529,21 +540,29 @@ function main() {
             
     console.log(floors);
 
+    // exporter.parse( scene, function (gltf) { 
+    //     var output = JSON.stringify (gltf, null, 2);
+    //     console.log(output);
+    //     downloadJSON(output, './scene.gltf');
+    // },null);
+
     const addObject = (position) => {
-        const deviceGeometry = new THREE.BoxBufferGeometry( 20, 20, 20 );
+        const deviceGeometry = new THREE.BoxBufferGeometry( 2, 2, 2 );
         const deviceMaterial = new THREE.MeshBasicMaterial( {color:0xDC143C });
         const object = new THREE.Mesh( deviceGeometry, deviceMaterial);
 
         if (position) {
             object.position.copy(position);
         } else {
-            object.position.x = Math.random() * 1000-500;
+            // object.position.x = Math.random() * 1000-500;
+            object.position.x = ((Math.random() * 1400) / 400) + 400;
             object.position.y = 300;
             object.position.z = 100;
         }
         object.deviceID = "cctv-"+cctvID++;
         scene.add(object); // 여기를 수정해야해 
         HelperObjects.push(object);
+        // exportGLTF( scene );
         return object;
     };
 
@@ -552,6 +571,7 @@ function main() {
         isViewMode : false,
         isRemoveMode: false,
         isReplacementMode: false, 
+        exportGLTF: ()=>{ exportGLTF(scene); },
     };
 
     let floorList = gui.addFolder('floors');
@@ -568,22 +588,23 @@ function main() {
     controller.add(controllerParams, 'createObject');
     controller.add(controllerParams, 'isViewMode').listen().onChange(() => {
         controllerParams.isRemoveMode = controllerParams.isViewMode ? 
-            false: controllerParams.isRemoveMode;
+        false: controllerParams.isRemoveMode;
         controllerParams.isReplacementMode = controllerParams.isViewMode ? 
-            false: controllerParams.isReplacementMode;
+        false: controllerParams.isReplacementMode;
     })
     controller.add(controllerParams, 'isRemoveMode').listen().onChange(() => {
         controllerParams.isViewMode = controllerParams.isRemoveMode ? 
-            false : controllerParams.isViewMode;
+        false : controllerParams.isViewMode;
         controllerParams.isReplacementMode = controllerParams.isRemoveMode ? 
-            false : controllerParams.isReplacementMode;
+        false : controllerParams.isReplacementMode;
     });
     controller.add(controllerParams, 'isReplacementMode').listen().onChange(() => {
         controllerParams.isViewMode = controllerParams.isReplacementMode ? 
-            false : controllerParams.isViewMode;
+        false : controllerParams.isViewMode;
         controllerParams.isRemoveMode = controllerParams.isReplacementMode ? 
-            false : controllerParams.isRemoveMode;
+        false : controllerParams.isRemoveMode;
     });
+    controller.add(controllerParams, 'exportGLTF');
     
     let detailinfo;
     
@@ -600,7 +621,7 @@ function main() {
 
     // add EventListeners
     // controls.addEventListener('change', render);
-    transformControl = new TransformControls( camera, renderer.domElement );
+    transformControl = new TransformControls( camera, canvas );
     transformControl.addEventListener( 'change', render );
     transformControl.addEventListener( 'dragging-changed', function ( event ) {
 
@@ -644,7 +665,7 @@ function main() {
     }
 
     function onPointerMove( event ) {
-        if(params.isReplacementMode){
+        if(controllerParams.isReplacementMode){
             event.preventDefault();   
             pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
             pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
@@ -659,7 +680,7 @@ function main() {
                     transformControl.attach( intersect.object );
                 }   
             }  
-        } 
+        }
     }
 
     function onPointerDown( event ) {
@@ -672,24 +693,16 @@ function main() {
     
         const intersects = raycaster.intersectObjects( HelperObjects );
     
-        if(params.isRemoveMode){
+        if(controllerParams.isRemoveMode){
     
             if ( intersects.length > 0 ) {
                 const intersect = intersects[ 0 ];
-                if (!isShiftDown ) {
-                    scene.remove( intersect.object );
-                    HelperObjects.splice( HelperObjects.indexOf( intersect.object ), 1 );
-                } 
-                else {
-                    console.log("isShiftDown")
-                    const voxel = new THREE.Mesh( geometry, material );
-                    voxel.position.copy( intersect.point ).add( intersect.face.normal );
-                    voxel.position.divideScalar( 20 ).floor().multiplyScalar( 20 ).addScalar( 10 );
-                    scene.add( voxel );
-                    HelperObjects.push( voxel );
-                }
+                
+                scene.remove( intersect.object );
+                HelperObjects.splice( HelperObjects.indexOf( intersect.object ), 1 );
+         
             }
-        } else if (params.isViewMode){
+        } else if (controllerParams.isViewMode){
             if ( intersects.length > 0 ) {
                 const intersect = intersects[ 0 ];
                 controls.enabled = false;
@@ -702,7 +715,7 @@ function main() {
         }
         render();
     }
-
+    
     // function onDocumentKeyDown( event ) {
     //     switch ( event.keyCode ) {
     //         case 16: isShiftDown = true; break;
@@ -713,34 +726,110 @@ function main() {
     //         case 16: isShiftDown = false; break;
     //     }
     // }
+    // function render(time) {
+        // time *= 0.001; 
+    let renderRequested = false;
+    function render() {
+        renderRequested = false;
 
-    function render(time) {
-        time *= 0.001; 
+
         if(resizeRendererToDisplaySize(renderer)){ 
             const canvas = renderer.domElement;
             camera.aspect = canvas.clientWidth / canvas.clientHeight;
             camera.updateProjectionMatrix();    
         }
-        const speed = 0.02;
-        const rot = time%300 * speed;
+
+        // const speed = 0.02;
+        // const rot = time%300 * speed;
         for(const idx in floors){
             floors[idx].position.x = -10;
         }
         if(detailinfo !== undefined ){
             floors[detailinfo].position.x = 300;
             scene.rotation.y = 0;
+            // requestAnimationFrame(render)
         } else {
             if(controllerParams.isViewMode || controllerParams.isReplacementMode 
                 || controllerParams.isRemoveMode){
                 scene.rotation.y = 0;
+                // requestAnimationFrame(render);
             } else {
-                scene.rotation.y = rot;
+                // scene.rotation.y = rot;
             }
         }
-        
+        controls.update();        
         renderer.render(scene, camera);
-        requestAnimationFrame(render);
+        //requestAnimationFrame(render);
     }
-    requestAnimationFrame(render);
+    // requestAnimationFrame(render);
+    // render();
+
+    function requestRenderIfNotRequested() {
+        if(!renderRequested) {
+            renderRequested = true;
+            requestAnimationFrame(render);
+        }
+    }
+
+    function exportGLTF( input ) {
+
+        const gltfExporter = new GLTFExporter();
+
+        const options = {
+            trs: true,
+            onlyVisible: true,
+            truncateDrawRange: true,
+            binary: true,
+            maxTextureSize: 4000 // To prevent NaN value
+            // trs: document.getElementById( 'option_trs' ).checked,
+            // onlyVisible: document.getElementById( 'option_visible' ).checked,
+            // truncateDrawRange: document.getElementById( 'option_drawrange' ).checked,
+            // binary: document.getElementById( 'option_binary' ).checked,
+            // // embedImages:false,
+            // maxTextureSize: Number( document.getElementById( 'option_maxsize' ).value ) || Infinity // To prevent NaN value
+        };
+        gltfExporter.parse( input, function ( result ) {
+
+            if ( result instanceof ArrayBuffer ) {
+
+                saveArrayBuffer( result, 'scene.glb' );
+
+            } else {
+
+                const output = JSON.stringify( result, null, 2 );
+                console.log( output );
+                saveString(output, 'scene.gltf');
+
+            }
+
+        }, options );
+
+    }
+	const link = document.createElement( 'a' );
+    link.style.display = 'none';
+    document.body.appendChild( link ); // Firefox workaround, see #6594
+    
+    function save( blob, filename ) {
+
+        link.href = URL.createObjectURL( blob );
+        link.download = filename;
+        link.click();
+
+        // URL.revokeObjectURL( url ); breaks Firefox...
+
+    }
+
+    function saveString( text, filename ) {
+
+        save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+
+    }
+
+
+    function saveArrayBuffer( buffer, filename ) {
+
+        save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+
+    }
 }
 main();
