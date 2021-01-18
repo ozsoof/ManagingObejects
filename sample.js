@@ -537,15 +537,7 @@ function main() {
     floors.push(floor);
     scene.add(floor1);
     scene.add(floor);
-            
-    console.log(floors);
-
-    // exporter.parse( scene, function (gltf) { 
-    //     var output = JSON.stringify (gltf, null, 2);
-    //     console.log(output);
-    //     downloadJSON(output, './scene.gltf');
-    // },null);
-
+       
     const addObject = (position) => {
         const deviceGeometry = new THREE.BoxBufferGeometry( 2, 2, 2 );
         const deviceMaterial = new THREE.MeshBasicMaterial( {color:0xDC143C });
@@ -555,7 +547,7 @@ function main() {
             object.position.copy(position);
         } else {
             // object.position.x = Math.random() * 1000-500;
-            object.position.x = ((Math.random() * 1400) / 400) + 400;
+            object.position.x = ((Math.random() * 1400) % 400) + 400;
             object.position.y = 300;
             object.position.z = 100;
         }
@@ -616,6 +608,7 @@ function main() {
                 }
             } 
             detailinfo = getSelectedFloor();
+            render();
         });
     };
 
@@ -716,22 +709,9 @@ function main() {
         render();
     }
     
-    // function onDocumentKeyDown( event ) {
-    //     switch ( event.keyCode ) {
-    //         case 16: isShiftDown = true; break;
-    //     }
-    // }
-    // function onDocumentKeyUp( event ) {
-    //     switch ( event.keyCode ) {
-    //         case 16: isShiftDown = false; break;
-    //     }
-    // }
-    // function render(time) {
-        // time *= 0.001; 
     let renderRequested = false;
     function render() {
         renderRequested = false;
-
 
         if(resizeRendererToDisplaySize(renderer)){ 
             const canvas = renderer.domElement;
@@ -831,5 +811,7 @@ function main() {
         save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
 
     }
+    render();
 }
 main();
+// requestAnimationFrame(render);
