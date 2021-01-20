@@ -1,7 +1,7 @@
 
 
 import * as THREE from './three.js/build/three.module.js';
-import { GUI } from './node_modules/dat.gui/build/dat.gui.module.js';;
+import { GUI } from './node_modules/dat.gui/build/dat.gui.module.js';
 import { OrbitControls } from './three.js/examples/jsm/controls/OrbitControls.js';
 import { TransformControls } from './three.js/examples/jsm/controls/TransformControls.js';
 import { GLTFLoader } from './three.js/examples/jsm/loaders/GLTFLoader.js';
@@ -34,7 +34,7 @@ function main() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     // renderer.setScissorTest(true);
     // renderer.setAnimationLoop(render);
-    console.log("test");
+
     canvas.appendChild( renderer.domElement);
 
     const loader = new THREE.TextureLoader();
@@ -65,26 +65,31 @@ function main() {
     // controls.update();
     controls.addEventListener('change', requestRenderIfNotRequested);
     
-    const scene = new THREE.Scene();    
+    const sceneM = new THREE.Scene();  
+    const sceneS = new THREE.Scene();  
     { 
         const light = new THREE.DirectionalLight(0xffffff, 1);
         light.position.set(10,80,-70); 
-        scene.add(light);
+        sceneM.add(light.clone());
+        sceneS.add(light.clone());
     }
     {
         const light = new THREE.DirectionalLight(0xffffff,1);
         light.position.set(10,40,70);
-        scene.add(light);
+        sceneM.add(light.clone());
+        sceneS.add(light.clone());
     }
     {
         const light = new THREE.DirectionalLight(0xffffff,1);
         light.position.set(100,40,10);
-        scene.add(light);
+        sceneM.add(light.clone());
+        sceneS.add(light.clone());
     }
     {
         const light = new THREE.DirectionalLight(0xffffff,1);
         light.position.set(-100,40,10);
-        scene.add(light);
+        sceneM.add(light.clone());
+        sceneS.add(light.clone());
     }
     
     // const bg = loader.load('resources/bluesky.jpeg');
@@ -123,7 +128,7 @@ function main() {
     groundMesh.receiveShadow = false;
     
     ground.add(groundMesh);
-    scene.add(ground);
+    sceneM.add(ground);
     // sample.add(ground);            
     
     const sideGeometry = new THREE.BoxBufferGeometry(300, 20, 5); 
@@ -552,7 +557,7 @@ function main() {
     // scene.add(floor);
     sample.add(floor1);
     sample.add(floor);
-    scene.add(sample);
+    sceneM.add(sample);
     // scene.remove(sample);
     // scene.add(floor1);
 
@@ -570,7 +575,7 @@ function main() {
             object.position.z = 100;
         }
         object.deviceID = "cctv-"+cctvID++;
-        scene.add(object); // 여기를 수정해야해 
+        sceneS.add(object); // 여기를 수정해야해 
         HelperObjects.push(object);
         
         // exportGLTF( scene );
@@ -582,7 +587,7 @@ function main() {
         isViewMode : false,
         isRemoveMode: false,
         isReplacementMode: false, 
-        exportGLTF: ()=>{ exportGLTF(scene); },
+        exportGLTF: ()=>{ exportGLTF(sceneM); },
     };
 
     let floorList = gui.addFolder('floors');
@@ -627,8 +632,8 @@ function main() {
                 }
             } 
             detailinfo = getSelectedFloor();
-            scene.rmove(sample);
-            scene.add(floors[detailinfo]);
+            // sceneL.rmove(sample);
+            sceneS.add(floors[detailinfo]);
             render();
         });
     };
@@ -642,7 +647,8 @@ function main() {
         controls.enabled = ! event.value;
 
     } );
-    scene.add( transformControl );
+    // sceneM.add( transformControl );
+    sceneS.add( transformControl);
     document.addEventListener( 'pointerdown', onPointerDown, false );
     document.addEventListener( 'pointerup', onPointerUp, false );
     document.addEventListener( 'pointermove', onPointerMove, false );
@@ -745,11 +751,16 @@ function main() {
     function render() {
         renderRequested = false;
 
-        if(resizeRendererToDisplaySize(renderer)){ 
-            const canvas = renderer.domElement;
-            camera.aspect = canvas.clientWidth / canvas.clientHeight;
-            camera.updateProjectionMatrix();    
-        }
+
+        renderer.setScissorTest( false );
+        renderer.clear();
+        renderer.setScissorTest( true );
+
+        // if(resizeRendererToDisplaySize(renderer)){ 
+        //     const canvas = renderer.domElement;
+        //     camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        //     camera.updateProjectionMatrix();    
+        // }
 
         // const speed = 0.02;
         // const rot = time%300 * speed;
@@ -758,19 +769,22 @@ function main() {
         }
         if(detailinfo !== undefined ){
             floors[detailinfo].position.x = 300;
-            scene.rotation.y = 0;
+            sceneM.rotation.y = 0;
             // requestAnimationFrame(render)
         } else {
             if(controllerParams.isViewMode || controllerParams.isReplacementMode 
                 || controllerParams.isRemoveMode){
-                scene.rotation.y = 0;
+                sceneM.rotation.y = 0;
                 // requestAnimationFrame(render);
             } else {
                 // scene.rotation.y = rot;
             }
         }
         controls.update();        
-        renderer.render(scene, camera);
+        renderer.setScissor(0,0, sliderPos, window.innerHeight);
+        renderer.render(sceneM, camera);
+        renderer.setScissor(sliderPos, 0, window.innerWidth, window.innerHeight);
+        renderer.render(sceneS, camera);
         //requestAnimationFrame(render);
     }
     // requestAnimationFrame(render);
@@ -804,13 +818,13 @@ function main() {
 
             if ( result instanceof ArrayBuffer ) {
 
-                saveArrayBuffer( result, 'scene.glb' );
+                saveArrayBuffer( result, 'sceneM.glb' );
 
             } else {
 
                 const output = JSON.stringify( result, null, 2 );
                 console.log( output );
-                saveString(output, 'scene.gltf');
+                saveString(output, 'sceneM.gltf');
 
             }
 
@@ -848,40 +862,45 @@ function main() {
     function initSlider() {
 
         const slider = document.querySelector( '.slider' );
-
+    
         function onPointerDown() {
-
+    
             if ( event.isPrimary === false ) return;
-
+    
             controls.enabled = false;
-
+    
             window.addEventListener( 'pointermove', onPointerMove, false );
             window.addEventListener( 'pointerup', onPointerUp, false );
-
+    
         }
-
+    
         function onPointerUp() {
-
+    
             controls.enabled = true;
-
+    
             window.removeEventListener( 'pointermove', onPointerMove, false );
             window.removeEventListener( 'pointerup', onPointerUp, false );
-
+    
         }
-
+    
         function onPointerMove( e ) {
-
+    
             if ( event.isPrimary === false ) return;
-
+    
             sliderPos = Math.max( 0, Math.min( window.innerWidth, e.pageX ) );
-
+    
             slider.style.left = sliderPos - ( slider.offsetWidth / 2 ) + "px";
 
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+    
+            renderer.setSize( sliderPos, window.innerHeight );
+    
         }
-
+    
         slider.style.touchAction = 'none'; // disable touch scroll
         slider.addEventListener( 'pointerdown', onPointerDown );
-
+    
     }
     render();
 }

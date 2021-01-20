@@ -18,8 +18,8 @@
 } */
 body {
 	margin: 0;
-	background-color: #000;
-	color: #fff;
+	/* background-color: #000; */
+	/* color: #fff; */
 	font-family: Monospace;
 	font-size: 13px;
 	line-height: 24px;
@@ -59,13 +59,6 @@ a, button, input, select {
 	pointer-events: auto;
 }
 
-.dg.ac {
-	-moz-user-select: none;
-	-webkit-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
-	z-index: 2 !important; /* TODO Solve this in HTML */
-}
 
 #overlay {
 	position: absolute;
@@ -77,7 +70,7 @@ a, button, input, select {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: rgba(0,0,0,0.7);
+	/* background: rgba(0,0,0,0.7); */
 }
 
 	#overlay button {
