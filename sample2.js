@@ -20,7 +20,7 @@ function main() {
     
     let transformControl;
     let cctvID=1;  // 임시 test   
-    let sliderPos = window.innerWidth /2;
+    let sliderPos = window.innerWidth;
 
     initSlider();
 
@@ -44,7 +44,7 @@ function main() {
     const makeCamera = (fov=75) => {
         const aspect =2;
         const zNear = 0.1;
-        const zFar = 4000;
+        const zFar = 8000;
         return new THREE.PerspectiveCamera(fov, aspect, zNear, zFar);
     }
     const camera = makeCamera();
@@ -65,31 +65,31 @@ function main() {
     // controls.update();
     controls.addEventListener('change', requestRenderIfNotRequested);
     
-    const sceneM = new THREE.Scene();  
-    const sceneS = new THREE.Scene();  
+    const sceneL = new THREE.Scene();  
+    const sceneR = new THREE.Scene();  
     { 
         const light = new THREE.DirectionalLight(0xffffff, 1);
         light.position.set(10,80,-70); 
-        sceneM.add(light.clone());
-        sceneS.add(light.clone());
+        sceneL.add(light.clone());
+        sceneR.add(light.clone());
     }
     {
         const light = new THREE.DirectionalLight(0xffffff,1);
         light.position.set(10,40,70);
-        sceneM.add(light.clone());
-        sceneS.add(light.clone());
+        sceneL.add(light.clone());
+        sceneR.add(light.clone());
     }
     {
         const light = new THREE.DirectionalLight(0xffffff,1);
         light.position.set(100,40,10);
-        sceneM.add(light.clone());
-        sceneS.add(light.clone());
+        sceneL.add(light.clone());
+        sceneR.add(light.clone());
     }
     {
         const light = new THREE.DirectionalLight(0xffffff,1);
         light.position.set(-100,40,10);
-        sceneM.add(light.clone());
-        sceneS.add(light.clone());
+        sceneL.add(light.clone());
+        sceneR.add(light.clone());
     }
     
     // const bg = loader.load('resources/bluesky.jpeg');
@@ -128,8 +128,9 @@ function main() {
     groundMesh.receiveShadow = false;
     
     ground.add(groundMesh);
-    sceneM.add(ground);
-    // sample.add(ground);            
+    sceneR.add(ground);
+    sceneL.add(ground);
+    //sample.add(ground);            
     
     const sideGeometry = new THREE.BoxBufferGeometry(300, 20, 5); 
     const sideMaterial = new THREE.MeshBasicMaterial({
@@ -557,12 +558,13 @@ function main() {
     // scene.add(floor);
     sample.add(floor1);
     sample.add(floor);
-    sceneM.add(sample);
+    sceneR.add(sample);
+    sceneL.add(sample);
     // scene.remove(sample);
     // scene.add(floor1);
 
     const addObject = (position) => {
-        const deviceGeometry = new THREE.BoxBufferGeometry( 2, 2, 2 );
+        const deviceGeometry = new THREE.BoxBufferGeometry( 50, 50, 50 );
         const deviceMaterial = new THREE.MeshBasicMaterial( {color:0xDC143C });
         const object = new THREE.Mesh( deviceGeometry, deviceMaterial);
 
@@ -575,7 +577,8 @@ function main() {
             object.position.z = 100;
         }
         object.deviceID = "cctv-"+cctvID++;
-        sceneS.add(object); // 여기를 수정해야해 
+        sceneR.children[-1].add(object); // 여기를 수정해야해 
+        console.log(sceneR);
         HelperObjects.push(object);
         
         // exportGLTF( scene );
@@ -587,7 +590,7 @@ function main() {
         isViewMode : false,
         isRemoveMode: false,
         isReplacementMode: false, 
-        exportGLTF: ()=>{ exportGLTF(sceneM); },
+        exportGLTF: ()=>{ exportGLTF(sceneL); },
     };
 
     let floorList = gui.addFolder('floors');
@@ -633,7 +636,7 @@ function main() {
             } 
             detailinfo = getSelectedFloor();
             // sceneL.rmove(sample);
-            sceneS.add(floors[detailinfo]);
+            sceneR.add(floors[detailinfo]);
             render();
         });
     };
@@ -648,7 +651,7 @@ function main() {
 
     } );
     // sceneM.add( transformControl );
-    sceneS.add( transformControl);
+    sceneR.add( transformControl);
     document.addEventListener( 'pointerdown', onPointerDown, false );
     document.addEventListener( 'pointerup', onPointerUp, false );
     document.addEventListener( 'pointermove', onPointerMove, false );
@@ -678,21 +681,29 @@ function main() {
     };
 
     const getSelectedFloor = () => {
+        
+        
         for (const key in params){
             if(params[key]===true){
+                sliderPos = 0;
                 for (const idx in floors){
                     if (floors[idx].name === key){
+                        camera.position.set(-440, 3600 + (idx * 20),-4275);
                         return idx;
                     }
                 }
             }
         }
+        sliderPos = window.innerWidth;
+        camera.position.set(0, 1000, 900);
+
     };
 
     function onPointerUp( event ) {
         onUpPosition.x = event.clientX;
         onUpPosition.y = event.clientY;
         if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) transformControl.detach();
+        render();
     }
 
     function onPointerMove( event ) {
@@ -729,7 +740,7 @@ function main() {
             if ( intersects.length > 0 ) {
                 const intersect = intersects[ 0 ];
                 
-                scene.remove( intersect.object );
+                sceneR.remove( intersect.object );
                 HelperObjects.splice( HelperObjects.indexOf( intersect.object ), 1 );
          
             }
@@ -747,60 +758,20 @@ function main() {
         render();
     }
     
-    let renderRequested = false;
-    function render() {
-        renderRequested = false;
-
-
-        renderer.setScissorTest( false );
-        renderer.clear();
-        renderer.setScissorTest( true );
-
-        // if(resizeRendererToDisplaySize(renderer)){ 
-        //     const canvas = renderer.domElement;
-        //     camera.aspect = canvas.clientWidth / canvas.clientHeight;
-        //     camera.updateProjectionMatrix();    
-        // }
-
-        // const speed = 0.02;
-        // const rot = time%300 * speed;
-        for(const idx in floors){
-            floors[idx].position.x = -10;
-        }
-        if(detailinfo !== undefined ){
-            floors[detailinfo].position.x = 300;
-            sceneM.rotation.y = 0;
-            // requestAnimationFrame(render)
-        } else {
-            if(controllerParams.isViewMode || controllerParams.isReplacementMode 
-                || controllerParams.isRemoveMode){
-                sceneM.rotation.y = 0;
-                // requestAnimationFrame(render);
-            } else {
-                // scene.rotation.y = rot;
-            }
-        }
-        controls.update();        
-        renderer.setScissor(0,0, sliderPos, window.innerHeight);
-        renderer.render(sceneM, camera);
-        renderer.setScissor(sliderPos, 0, window.innerWidth, window.innerHeight);
-        renderer.render(sceneS, camera);
-        //requestAnimationFrame(render);
-    }
-    // requestAnimationFrame(render);
+    
     // render();
-
+    
     function requestRenderIfNotRequested() {
         if(!renderRequested) {
             renderRequested = true;
             requestAnimationFrame(render);
         }
     }
-
+    
     function exportGLTF( input ) {
-
+        
         const gltfExporter = new GLTFExporter();
-
+        
         const options = {
             trs: true,
             onlyVisible: true,
@@ -815,94 +786,158 @@ function main() {
             // maxTextureSize: Number( document.getElementById( 'option_maxsize' ).value ) || Infinity // To prevent NaN value
         };
         gltfExporter.parse( input, function ( result ) {
-
+            
             if ( result instanceof ArrayBuffer ) {
-
-                saveArrayBuffer( result, 'sceneM.glb' );
-
+                
+                saveArrayBuffer( result, 'sceneL.glb' );
+                
             } else {
-
+                
                 const output = JSON.stringify( result, null, 2 );
                 console.log( output );
-                saveString(output, 'sceneM.gltf');
-
+                saveString(output, 'sceneL.gltf');
+                
             }
-
+            
         }, options );
-
+        
     }
 	const link = document.createElement( 'a' );
     link.style.display = 'none';
     document.body.appendChild( link ); // Firefox workaround, see #6594
     
     function save( blob, filename ) {
-
+        
         link.href = URL.createObjectURL( blob );
         link.download = filename;
         link.click();
-
+        
         // URL.revokeObjectURL( url ); breaks Firefox...
-
+        
     }
-
+    
     function saveString( text, filename ) {
-
+        
         save( new Blob( [ text ], { type: 'text/plain' } ), filename );
-
+        
     }
-
-
+    
+    
     function saveArrayBuffer( buffer, filename ) {
-
+        
         save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
-
+        
     }
-
-
+    
+    
     function initSlider() {
-
+        
         const slider = document.querySelector( '.slider' );
-    
+        
         function onPointerDown() {
-    
+            
             if ( event.isPrimary === false ) return;
-    
+            
             controls.enabled = false;
-    
+            
             window.addEventListener( 'pointermove', onPointerMove, false );
             window.addEventListener( 'pointerup', onPointerUp, false );
-    
+            
         }
-    
+        
         function onPointerUp() {
-    
+            
             controls.enabled = true;
-    
+            
             window.removeEventListener( 'pointermove', onPointerMove, false );
             window.removeEventListener( 'pointerup', onPointerUp, false );
-    
+            //render();
         }
-    
+        
         function onPointerMove( e ) {
-    
+            
             if ( event.isPrimary === false ) return;
-    
+            
             sliderPos = Math.max( 0, Math.min( window.innerWidth, e.pageX ) );
-    
+            
             slider.style.left = sliderPos - ( slider.offsetWidth / 2 ) + "px";
-
+            
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
-    
-            renderer.setSize( sliderPos, window.innerHeight );
-    
+            
+            //renderer.setSize( sliderPos, window.innerHeight );
+            
         }
-    
+        
         slider.style.touchAction = 'none'; // disable touch scroll
         slider.addEventListener( 'pointerdown', onPointerDown );
-    
+        
     }
-    render();
+    let renderRequested = false;
+    let beforeScaleUp = new THREE.Vector3;
+    let floorDetail = null;
+    
+    function render() {
+
+        renderRequested = false;        
+        renderer.setScissorTest( false );
+        renderer.clear();
+        renderer.setScissorTest( true );
+    
+        //console.log(camera.position);
+        // if(resizeRendererToDisplaySize(renderer)){ 
+        //     const canvas = renderer.domElement;
+        //     camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        //     camera.updateProjectionMatrix();    
+        // }
+    
+        // const speed = 0.02;
+        // const rot = time%300 * speed;
+        for(const idx in floors){
+            // floors[idx].position.x = -10;
+            // console.log(beforeScaleUp);
+            floors[idx].scale.set(1,1,1);
+            sceneL.add(floors[idx]);
+            
+        }
+        if(detailinfo !== undefined ){
+            // floors[detailinfo].position.x = 300;
+            //floorDetail = floors[detailinfo].clone();
+            floors[detailinfo].scale.set(10,10,10);
+            // floors[detailinfo].position.y=0;
+            // floorDetail.scale.set(10,10,10);
+            console.log(floors[detailinfo].position);
+            sceneR.add(floors[detailinfo]);
+            
+            //sceneR.add(floorDetail);
+
+            // requestAnimationFrame(render)
+        } else {
+            // if(controllerParams.isViewMode || controllerParams.isReplacementMode 
+            //     || controllerParams.isRemoveMode){
+            //     sceneL.rotation.y = 0;
+            //     // requestAnimationFrame(render);
+            // } else {
+            //     // scene.rotation.y = rot;
+            // }
+
+            
+            sliderPos = window.innerWidth;
+        }
+        controls.update();        
+        renderer.setScissor(0,0, sliderPos, window.innerHeight);
+        renderer.render(sceneL, camera);
+        renderer.setScissor(sliderPos, 0, window.innerWidth, window.innerHeight);
+        renderer.render(sceneR, camera);
+        //requestAnimationFrame(render);
+        // renderer.setScissor( 0, 0, sliderPos, window.innerHeight );
+        // renderer.render( sceneL, camera );
+
+        // renderer.setScissor( sliderPos, 0, window.innerWidth, window.innerHeight );
+        // renderer.render( sceneR, camera );
+    }
+    // render();
+    //requestAnimationFrame(render);
 }
 main();
 // requestAnimationFrame(render);
