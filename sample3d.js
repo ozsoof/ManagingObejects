@@ -1,98 +1,10 @@
 
-
 import * as THREE from './three.js/build/three.module.js';
-import { GUI } from './node_modules/dat.gui/build/dat.gui.module.js';
-import { OrbitControls } from './three.js/examples/jsm/controls/OrbitControls.js';
-import { TransformControls } from './three.js/examples/jsm/controls/TransformControls.js';
 import { GLTFLoader } from './three.js/examples/jsm/loaders/GLTFLoader.js';
 import { GLTFExporter } from './three.js/examples/jsm/exporters/GLTFExporter.js';
 
-function main() {
-    
-    let isShiftDown = false;
-    const HelperObjects = [];
-    const point = new THREE.Vector3();
-    const raycaster = new THREE.Raycaster();  
-    const pointer = new THREE.Vector2();  
-    const onUpPosition = new THREE.Vector2();
-    const onDownPosition = new THREE.Vector2(); 
-    // const exporter = new GLTFExporter();                                               
-    
-    let transformControl;
-    let cctvID=1;  // 임시 test   
-    let sliderPos = window.innerWidth;
-
-    initSlider();
-
-    const canvas =document.querySelector( '.container' ); 
-    const renderer = new THREE.WebGLRenderer({
-        // canvas:canvas,
-        alpha: true,
-        antialias: true,
-    });
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    // renderer.setScissorTest(true);
-    // renderer.setAnimationLoop(render);
-
-    canvas.appendChild( renderer.domElement);
-
+export const getSample = () => {
     const loader = new THREE.TextureLoader();
-    
-    const gui = new GUI();
-    
-    const makeCamera = (fov=75) => {
-        const aspect =2;
-        const zNear = 0.1;
-        const zFar = 8000;
-        return new THREE.PerspectiveCamera(fov, aspect, zNear, zFar);
-    }
-    const camera = makeCamera();
-    camera.position.set(0, 1000, 900)
-    camera.lookAt(0,0,0);
-    
-    {
-        const light = new THREE.DirectionalLight(0xffffff,1);
-        light.position.set(2,2,4);
-        camera.add(light);
-    }
-    
-    const controls = new OrbitControls(camera, canvas);
-    controls.target.set(0,50,-20);
-    controls.minPolarAngle = 0;
-    controls.maxPolarAngle = Math.PI / 2;
-    controls.enableDamping=true;
-    // controls.update();
-    controls.addEventListener('change', requestRenderIfNotRequested);
-    
-    const sceneL = new THREE.Scene();  
-    const sceneR = new THREE.Scene();  
-    { 
-        const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(10,80,-70); 
-        sceneL.add(light.clone());
-        sceneR.add(light.clone());
-    }
-    {
-        const light = new THREE.DirectionalLight(0xffffff,1);
-        light.position.set(10,40,70);
-        sceneL.add(light.clone());
-        sceneR.add(light.clone());
-    }
-    {
-        const light = new THREE.DirectionalLight(0xffffff,1);
-        light.position.set(100,40,10);
-        sceneL.add(light.clone());
-        sceneR.add(light.clone());
-    }
-    {
-        const light = new THREE.DirectionalLight(0xffffff,1);
-        light.position.set(-100,40,10);
-        sceneL.add(light.clone());
-        sceneR.add(light.clone());
-    }
-    
-    // const bg = loader.load('resources/bluesky.jpeg');
     const groundTexture = loader.load('resources/aroundbuilding.png');
     const windowTexture = loader.load('resources/Window.png');
     const doorTexture = loader.load('resources/Window.png');
@@ -103,35 +15,30 @@ function main() {
     const pillarTexture = loader.load('resources/pillar.png');
     const blindTextrue = loader.load('resources/Blind.png');
     const floor1Texture = loader.load('resources/Window.png');
-    
+    const floors = [];
     const ground = new THREE.Object3D();
-    
     const sample = new THREE.Object3D();
-    // scene.background = bg;
     windowTexture.wrapS = THREE.RepeatWrapping;
     windowTexture.repeat.set(17,1);
-    
+
     const groundGeometry = new THREE.PlaneBufferGeometry(1000,1000);
     const groundMaterial = new THREE.MeshBasicMaterial({
         map: groundTexture, 
     });
-    
+
     const helper = new THREE.GridHelper( 1000, 100 );
     helper.position.y = 1;
     helper.material.opacity = 0.2;
     helper.material.transparent = true;
-    // scene.add( helper );
-    sample.add( helper ); 
+    // sample.add(helper);
+    sample.add(helper);
 
     const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
     groundMesh.rotation.x = Math.PI * -.5;
     groundMesh.receiveShadow = false;
-    
+
     ground.add(groundMesh);
-    sceneR.add(ground);
-    sceneL.add(ground);
-    //sample.add(ground);            
-    
+    sample.add(ground);
     const sideGeometry = new THREE.BoxBufferGeometry(300, 20, 5); 
     const sideMaterial = new THREE.MeshBasicMaterial({
         // color: 0x000080,
@@ -156,8 +63,7 @@ function main() {
     });
     
     let i;
-    const floors = []
-
+    
     //1 floor
     const floor1 = new THREE.Object3D();
     const floor1Geometry = new THREE.BoxBufferGeometry(200, 20, 1); 
@@ -257,7 +163,6 @@ function main() {
     // pillar
     const pillarGeometry = new THREE.BoxBufferGeometry(10, 20, 10); 
     const pillarMaterial = new THREE.MeshBasicMaterial({
-        // color: 0xA0522D,
         opacity: 0.7, 
         transparent: true,
         map: pillarTexture, 
@@ -346,7 +251,6 @@ function main() {
     //entrance roof  
     const entranceGeometry = new THREE.BoxBufferGeometry(175, 4, 40); 
     const entranceMaterial = new THREE.MeshBasicMaterial({
-        // color: 0xA0522D,
         opacity: 0.8, 
         transparent: true,
         map: pillarTexture, 
@@ -465,7 +369,6 @@ function main() {
 
     for(i=0; i< 35; i++){
         const floor = new THREE.Object3D();
-        
         floor.position.y = i*20;
         floor.position.x = -10;
         floor.position.z = 20;
@@ -505,7 +408,6 @@ function main() {
         floor.add(layerMesh);
         floor.name="floor"+(i+2);
         floors.push(floor);   // gui로 관리 목적
-        // scene.add(floor);
         sample.add(floor);
     }
     
@@ -537,13 +439,11 @@ function main() {
         // transparent: true,
         map: ciTexture,
     });
-    
     //roofvci
     const ciMesh = new THREE.Mesh(ciGeometry, ciMaterial);
     ciMesh.position.y = 40;    ciMesh.position.x = -80;
     ciMesh.position.z = -56;
     ciMesh.rotation.y = 3.0;
-    
     //roof group
     const floor = new THREE.Object3D();
     floor.position.y = i*20;
@@ -554,390 +454,51 @@ function main() {
     floor.add(layerMesh);
     floor.name="floor"+(i+2);
     floors.push(floor);
-    // scene.add(floor1);
-    // scene.add(floor);
     sample.add(floor1);
     sample.add(floor);
-    sceneR.add(sample);
-    sceneL.add(sample);
-    // scene.remove(sample);
-    // scene.add(floor1);
 
-    const addObject = (position) => {
-        const deviceGeometry = new THREE.BoxBufferGeometry( 50, 50, 50 );
-        const deviceMaterial = new THREE.MeshBasicMaterial( {color:0xDC143C });
-        const object = new THREE.Mesh( deviceGeometry, deviceMaterial);
-
-        if (position) {
-            object.position.copy(position);
-        } else {
-            // object.position.x = Math.random() * 1000-500;
-            object.position.x = ((Math.random() * 1400) % 400) + 400;
-            object.position.y = 300;
-            object.position.z = 100;
-        }
-        object.deviceID = "cctv-"+cctvID++;
-        sceneR.children[-1].add(object); // 여기를 수정해야해 
-        console.log(sceneR);
-        HelperObjects.push(object);
-        
-        // exportGLTF( scene );
-        return object;
-    };
-
-    const controllerParams = {  // controller parameters
-        createObject: addObject,
-        isViewMode : false,
-        isRemoveMode: false,
-        isReplacementMode: false, 
-        exportGLTF: ()=>{ exportGLTF(sceneL); },
-    };
-
-    let floorList = gui.addFolder('floors');
-    let controller = gui.addFolder('controller');
-
-    let params = {};
-    floors.map((floor, idx)=> {
-        const name = "floor" + (idx+1);
-        params = { ...params,
-            [name]:false,
-        };
-    });
-    
-    controller.add(controllerParams, 'createObject');
-    controller.add(controllerParams, 'isViewMode').listen().onChange(() => {
-        controllerParams.isRemoveMode = controllerParams.isViewMode ? 
-        false: controllerParams.isRemoveMode;
-        controllerParams.isReplacementMode = controllerParams.isViewMode ? 
-        false: controllerParams.isReplacementMode;
-    })
-    controller.add(controllerParams, 'isRemoveMode').listen().onChange(() => {
-        controllerParams.isViewMode = controllerParams.isRemoveMode ? 
-        false : controllerParams.isViewMode;
-        controllerParams.isReplacementMode = controllerParams.isRemoveMode ? 
-        false : controllerParams.isReplacementMode;
-    });
-    controller.add(controllerParams, 'isReplacementMode').listen().onChange(() => {
-        controllerParams.isViewMode = controllerParams.isReplacementMode ? 
-        false : controllerParams.isViewMode;
-        controllerParams.isRemoveMode = controllerParams.isReplacementMode ? 
-        false : controllerParams.isRemoveMode;
-    });
-    controller.add(controllerParams, 'exportGLTF');
-    
-    let detailinfo;
-    
-    for(const key in params){
-        floorList.add(params, key).listen().onChange(()=>{
-            for(const key2 in params){
-                if(key !== key2){
-                    params[key2] = params[key] ? false : params[key2];
-                }
-            } 
-            detailinfo = getSelectedFloor();
-            // sceneL.rmove(sample);
-            sceneR.add(floors[detailinfo]);
-            render();
-        });
-    };
-
-    // add EventListeners
-    // controls.addEventListener('change', render);
-    transformControl = new TransformControls( camera, canvas );
-    transformControl.addEventListener( 'change', render );
-    transformControl.addEventListener( 'dragging-changed', function ( event ) {
-
-        controls.enabled = ! event.value;
-
-    } );
-    // sceneM.add( transformControl );
-    sceneR.add( transformControl);
-    document.addEventListener( 'pointerdown', onPointerDown, false );
-    document.addEventListener( 'pointerup', onPointerUp, false );
-    document.addEventListener( 'pointermove', onPointerMove, false );
-    window.addEventListener( 'resize', onWindowResize );
-    // document.addEventListener( 'keydown', onDocumentKeyDown, false );
-    // document.addEventListener( 'keyup', onDocumentKeyUp, false );
-    function onWindowResize() {
-
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-
-        renderer.setSize( window.innerWidth, window.innerHeight );
-
-    }
-
-
-
-    const resizeRendererToDisplaySize = (renderer) => {
-        const canvas = renderer.domElement;
-        const width = canvas.clientWidth;
-        const height = canvas.clientHeight;
-        const needResize = canvas.width !== width || canvas.height !== height;
-        if (needResize) {
-            renderer.setSize(width, height, false);
-        }
-        return needResize;
-    };
-
-    const getSelectedFloor = () => {
-        
-        
-        for (const key in params){
-            if(params[key]===true){
-                sliderPos = 0;
-                for (const idx in floors){
-                    if (floors[idx].name === key){
-                        camera.position.set(-440, 3600 + (idx * 20),-4275);
-                        return idx;
-                    }
-                }
-            }
-        }
-        sliderPos = window.innerWidth;
-        camera.position.set(0, 1000, 900);
-
-    };
-
-    function onPointerUp( event ) {
-        onUpPosition.x = event.clientX;
-        onUpPosition.y = event.clientY;
-        if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) transformControl.detach();
-        render();
-    }
-
-    function onPointerMove( event ) {
-        if(controllerParams.isReplacementMode){
-            event.preventDefault();   
-            pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-            pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-            raycaster.setFromCamera( pointer, camera );
-            const intersects = raycaster.intersectObjects( HelperObjects );
-        
-            if ( intersects.length > 0 ) {
-                // const object = intersects[ 0 ].object;
-                const intersect = intersects[ 0 ];
-                
-                if ( intersect.object !== transformControl.object ) {
-                    transformControl.attach( intersect.object );
-                }   
-            }  
-        }
-    }
-
-    function onPointerDown( event ) {
-     
-        event.preventDefault();
-    
-        pointer.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
-    
-        raycaster.setFromCamera( pointer, camera );
-    
-        const intersects = raycaster.intersectObjects( HelperObjects );
-    
-        if(controllerParams.isRemoveMode){
-    
-            if ( intersects.length > 0 ) {
-                const intersect = intersects[ 0 ];
-                
-                sceneR.remove( intersect.object );
-                HelperObjects.splice( HelperObjects.indexOf( intersect.object ), 1 );
-         
-            }
-        } else if (controllerParams.isViewMode){
-            if ( intersects.length > 0 ) {
-                const intersect = intersects[ 0 ];
-                controls.enabled = false;
-                alert(intersect.object.deviceID);
-            }
-        } else {
-            
-            onDownPosition.x = event.clientX;
-            onDownPosition.y = event.clientY;
-        }
-        render();
-    }
-    
-    
-    // render();
-    
-    function requestRenderIfNotRequested() {
-        if(!renderRequested) {
-            renderRequested = true;
-            requestAnimationFrame(render);
-        }
-    }
-    
-    function exportGLTF( input ) {
-        
-        const gltfExporter = new GLTFExporter();
-        
-        const options = {
-            trs: true,
-            onlyVisible: true,
-            truncateDrawRange: true,
-            binary: true,
-            maxTextureSize: 4000 // To prevent NaN value
-            // trs: document.getElementById( 'option_trs' ).checked,
-            // onlyVisible: document.getElementById( 'option_visible' ).checked,
-            // truncateDrawRange: document.getElementById( 'option_drawrange' ).checked,
-            // binary: document.getElementById( 'option_binary' ).checked,
-            // // embedImages:false,
-            // maxTextureSize: Number( document.getElementById( 'option_maxsize' ).value ) || Infinity // To prevent NaN value
-        };
-        gltfExporter.parse( input, function ( result ) {
-            
-            if ( result instanceof ArrayBuffer ) {
-                
-                saveArrayBuffer( result, 'sceneL.glb' );
-                
-            } else {
-                
-                const output = JSON.stringify( result, null, 2 );
-                console.log( output );
-                saveString(output, 'sceneL.gltf');
-                
-            }
-            
-        }, options );
-        
-    }
-	const link = document.createElement( 'a' );
-    link.style.display = 'none';
-    document.body.appendChild( link ); // Firefox workaround, see #6594
-    
-    function save( blob, filename ) {
-        
-        link.href = URL.createObjectURL( blob );
-        link.download = filename;
-        link.click();
-        
-        // URL.revokeObjectURL( url ); breaks Firefox...
-        
-    }
-    
-    function saveString( text, filename ) {
-        
-        save( new Blob( [ text ], { type: 'text/plain' } ), filename );
-        
-    }
-    
-    
-    function saveArrayBuffer( buffer, filename ) {
-        
-        save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
-        
-    }
-    
-    
-    function initSlider() {
-        
-        const slider = document.querySelector( '.slider' );
-        
-        function onPointerDown() {
-            
-            if ( event.isPrimary === false ) return;
-            
-            controls.enabled = false;
-            
-            window.addEventListener( 'pointermove', onPointerMove, false );
-            window.addEventListener( 'pointerup', onPointerUp, false );
-            
-        }
-        
-        function onPointerUp() {
-            
-            controls.enabled = true;
-            
-            window.removeEventListener( 'pointermove', onPointerMove, false );
-            window.removeEventListener( 'pointerup', onPointerUp, false );
-            //render();
-        }
-        
-        function onPointerMove( e ) {
-            
-            if ( event.isPrimary === false ) return;
-            
-            sliderPos = Math.max( 0, Math.min( window.innerWidth, e.pageX ) );
-            
-            slider.style.left = sliderPos - ( slider.offsetWidth / 2 ) + "px";
-            
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            
-            //renderer.setSize( sliderPos, window.innerHeight );
-            
-        }
-        
-        slider.style.touchAction = 'none'; // disable touch scroll
-        slider.addEventListener( 'pointerdown', onPointerDown );
-        
-    }
-    let renderRequested = false;
-    let beforeScaleUp = new THREE.Vector3;
-    let floorDetail = null;
-    
-    function render() {
-
-        renderRequested = false;        
-        renderer.setScissorTest( false );
-        renderer.clear();
-        renderer.setScissorTest( true );
-    
-        //console.log(camera.position);
-        // if(resizeRendererToDisplaySize(renderer)){ 
-        //     const canvas = renderer.domElement;
-        //     camera.aspect = canvas.clientWidth / canvas.clientHeight;
-        //     camera.updateProjectionMatrix();    
-        // }
-    
-        // const speed = 0.02;
-        // const rot = time%300 * speed;
-        for(const idx in floors){
-            // floors[idx].position.x = -10;
-            // console.log(beforeScaleUp);
-            floors[idx].scale.set(1,1,1);
-            sceneL.add(floors[idx]);
-            
-        }
-        if(detailinfo !== undefined ){
-            // floors[detailinfo].position.x = 300;
-            //floorDetail = floors[detailinfo].clone();
-            floors[detailinfo].scale.set(10,10,10);
-            // floors[detailinfo].position.y=0;
-            // floorDetail.scale.set(10,10,10);
-            console.log(floors[detailinfo].position);
-            sceneR.add(floors[detailinfo]);
-            
-            //sceneR.add(floorDetail);
-
-            // requestAnimationFrame(render)
-        } else {
-            // if(controllerParams.isViewMode || controllerParams.isReplacementMode 
-            //     || controllerParams.isRemoveMode){
-            //     sceneL.rotation.y = 0;
-            //     // requestAnimationFrame(render);
-            // } else {
-            //     // scene.rotation.y = rot;
-            // }
-
-            
-            sliderPos = window.innerWidth;
-        }
-        controls.update();        
-        renderer.setScissor(0,0, sliderPos, window.innerHeight);
-        renderer.render(sceneL, camera);
-        renderer.setScissor(sliderPos, 0, window.innerWidth, window.innerHeight);
-        renderer.render(sceneR, camera);
-        //requestAnimationFrame(render);
-        // renderer.setScissor( 0, 0, sliderPos, window.innerHeight );
-        // renderer.render( sceneL, camera );
-
-        // renderer.setScissor( sliderPos, 0, window.innerWidth, window.innerHeight );
-        // renderer.render( sceneR, camera );
-    }
-    // render();
-    //requestAnimationFrame(render);
+    console.log(sample);
+    return { sample, floors };
 }
-main();
-// requestAnimationFrame(render);
+
+export function exportGLTF( input ) {
+        
+    const gltfExporter = new GLTFExporter();
+    const options = {
+        trs: true,
+        onlyVisible: true,
+        truncateDrawRange: true,
+        binary: true,
+        maxTextureSize: 4000 
+    };
+    gltfExporter.parse( input, function ( result ) {
+        
+        if ( result instanceof ArrayBuffer ) {
+            
+            saveArrayBuffer( result, 'sceneL.glb' );
+            
+        } else {
+            const output = JSON.stringify( result, null, 2 );
+            console.log( output );
+            saveString(output, 'sceneL.gltf');
+        }
+    }, options );
+}
+
+function save( blob, filename ) {
+    const link = document.createElement( 'a' );
+    link.style.display = 'none';
+    document.body.appendChild( link ); 
+    link.href = URL.createObjectURL( blob );
+    link.download = filename;
+    link.click();
+    // URL.revokeObjectURL( url ); breaks Firefox...
+}
+
+function saveString( text, filename ) {
+    save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+}
+
+function saveArrayBuffer( buffer, filename ) {
+    save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+}
