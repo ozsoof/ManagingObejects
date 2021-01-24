@@ -3,7 +3,7 @@ export const getCctvData = {
         {
             "camera_no":"1",
             "camera_type":"2018_A",
-            "location": "1F",
+            "location": " ",
             "active": true,
             "placement": false,
             "from": "2021-01-01",
@@ -12,7 +12,7 @@ export const getCctvData = {
         {
             "camera_no":"2",
             "camera_type":"2018_A",
-            "location": "1F",
+            "location": " ",
             "active": true,
             "placement": false,
             "from": "2021-01-01",
@@ -21,7 +21,7 @@ export const getCctvData = {
         {
             "camera_no":"3",
             "camera_type":"2019_A",
-            "location": "2F",
+            "location": " ",
             "active": true,
             "placement": false,
             "from": "2021-01-01",
@@ -30,7 +30,7 @@ export const getCctvData = {
         {
             "camera_no":"4",
             "camera_type":"2020_A",
-            "location": "2F",
+            "location": " ",
             "active": true,
             "placement": false,
             "from": "2021-01-01",

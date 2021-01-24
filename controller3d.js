@@ -98,6 +98,8 @@ function main() {
         
         object.device = data;
         object.device.placement = true;
+        object.device.location =child.name;
+        console.log(object.device);
         child.add(object);
         HelperObjects.push(object);
         return object;
@@ -278,6 +280,7 @@ function main() {
                 const intersect = intersects[ 0 ];     
                 // sceneR.remove( intersect.object );
                 intersect.object.device.placement = false;
+                intersect.object.device.location = " ";
                 child.remove( intersect.object );
                 HelperObjects.splice( HelperObjects.indexOf( intersect.object ), 1 );
             }
