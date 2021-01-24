@@ -2,19 +2,23 @@
 import * as THREE from './three.js/build/three.module.js';
 import { GLTFLoader } from './three.js/examples/jsm/loaders/GLTFLoader.js';
 import { GLTFExporter } from './three.js/examples/jsm/exporters/GLTFExporter.js';
+import {
+    groundTexture, 
+    windowTexture,
+    doorTexture,
+    roofTexture,
+    sidesTexture,
+    ciTexture,
+    frontTexture,
+    pillarTexture,
+    blindTextrue,
+    floor1Texture,
+    floor1sideTexture, 
+    checkerboardTexture,
+    lensTexture } from './textures.js';
+import { OBJLoader } from './three.js/examples/jsm/loaders/OBJLoader.js';
 
 export const getSample = () => {
-    const loader = new THREE.TextureLoader();
-    const groundTexture = loader.load('resources/aroundbuilding.png');
-    const windowTexture = loader.load('resources/Window.png');
-    const doorTexture = loader.load('resources/Window.png');
-    const roofTexture = loader.load('resources/roof.png');
-    const sidesTexture = loader.load('resources/sides.png');
-    const ciTexture = loader.load('resources/sampleci.png');
-    const frontTexture = loader.load('resources/frontOfBuilding2.png');
-    const pillarTexture = loader.load('resources/pillar.png');
-    const blindTextrue = loader.load('resources/Blind.png');
-    const floor1Texture = loader.load('resources/Window.png');
     const floors = [];
     const ground = new THREE.Object3D();
     const sample = new THREE.Object3D();
@@ -86,7 +90,6 @@ export const getSample = () => {
     floor1backMesh.position.x = 20;
     floor1backMesh.position.z = -200;
     floor1backMesh.rotation.y = 3.0;
-    const floor1sideTexture = loader.load('resources/Window.png');
     const floor1sideMaterial = new THREE.MeshBasicMaterial({
         //color: 0xffffff,
         opacity: 0.7, 
@@ -118,7 +121,7 @@ export const getSample = () => {
     floor1rightbackMesh.position.z = -170;
     floor1rightbackMesh.rotation.y = 3.0;
     
-    const checkerboardTexture = loader.load('resources/checkerboard.jpg');
+    
     const floor1centerMaterial = new THREE.MeshBasicMaterial({
         color: 0xA0522D,
         opacity: 0.5, 
@@ -457,7 +460,7 @@ export const getSample = () => {
     sample.add(floor1);
     sample.add(floor);
 
-    console.log(sample);
+    // console.log(sample);
     return { sample, floors };
 }
 
@@ -501,4 +504,18 @@ function saveString( text, filename ) {
 
 function saveArrayBuffer( buffer, filename ) {
     save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+}
+
+export function getCCTV3d() {
+    //let cctv3d= new THREE.Object3D();
+    let cctv3d= new THREE.Group();
+    {
+        const objLoader = new OBJLoader();
+        objLoader.load('resources/cctv/camera.obj', (obj) => {
+            obj.children.map(node => {
+                 cctv3d.add(node.clone());
+            });
+        });
+    }
+    return cctv3d;
 }

@@ -7,3 +7,10 @@
   display: block;
   z-index: -1;
 }
+.no-pointer-events {
+  pointer-events: none;
+}
+.control-disabled {
+  color: #888;
+  text-decoration: line-through;
+}

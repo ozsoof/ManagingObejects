@@ -4,7 +4,9 @@ import * as THREE from './three.js/build/three.module.js';
 import { GUI } from './node_modules/dat.gui/build/dat.gui.module.js';
 import { OrbitControls } from './three.js/examples/jsm/controls/OrbitControls.js';
 import { TransformControls } from './three.js/examples/jsm/controls/TransformControls.js';
-import { getSample, exportGLTF } from './sample.js';
+import { getSample, exportGLTF, getCCTV3d } from './sample3d.js';
+import { getCctvData } from './datacontroller.js'
+
 
 function main() {
     
@@ -20,7 +22,6 @@ function main() {
     let detailinfo;
     let cctvID=1;  // 임시 test 
 
-    
     const canvas =document.querySelector('.container'); 
     const renderer = new THREE.WebGLRenderer({
         // canvas:canvas,
@@ -80,33 +81,34 @@ function main() {
         sceneR.add(light.clone());
     }
     
-    const sample = getSample();
+    const sample = getSample();  // renader 부분에서 뒤늦게 건물을 띄워서 그런거 같다. 참고 . 
     sceneL.add(sample.sample);
-    
-    const addObject = (position) => {
+  
+    sceneL.background = new THREE.Color('black');
+    sceneR.background = new THREE.Color('black');
+    const addObject = (data) => {
         const deviceGeometry = new THREE.BoxBufferGeometry( 10, 10, 10 );
         const deviceMaterial = new THREE.MeshBasicMaterial( {color:0xDC143C });
         const object = new THREE.Mesh( deviceGeometry, deviceMaterial);
         object.rotation.y = 3.0;
         let child= sceneR.children[sceneR.children.length-1];
-        console.log(child);
-        if (position) {
-            object.position.copy(position);
-        } else {
-            object.position.x = ((Math.random() * 1400) % 100);
-            object.position.y = child.position.y + 40;
-            object.position.z = 0;
-        }
-        object.deviceID = "cctv-"+cctvID++;
-        child.add(object); // 여기를 수정해야해 
+        object.position.x = ((Math.random() * 1400) % 100);
+        object.position.y = child.position.y + 40;
+        object.position.z = 0;
+        
+        object.device = data;
+        object.device.placement = true;
+        child.add(object);
         HelperObjects.push(object);
         return object;
     };
     
     const gui = new GUI();
     let floorList = gui.addFolder('floors');
+    let cctvList = gui.addFolder('getCCTV');
     let controller = gui.addFolder('controller');
-    
+    const crossMenu = [];
+
     const controllerParams = {  // controller parameters
         createObject: addObject,
         isViewMode : false,
@@ -115,6 +117,15 @@ function main() {
         exportGLTF: ()=>{ exportGLTF(sceneL); },
     };
     
+    const cctvData = getCctvData;
+    let cctvs = {};
+    cctvData.cctv.map((object, idx) => {
+        const name = "cctv_" + object.camera_no;
+        cctvs = { ...cctvs,
+            [name]:()=>{addObject(object)},
+        };
+    });
+
     let params = {};
     sample.floors.map((floor, idx)=> {
         const name = "floor" + (idx+1);
@@ -123,7 +134,7 @@ function main() {
         };
     });
     
-    controller.add(controllerParams, 'createObject');
+    //controller.add(controllerParams, 'createObject');
     gui.add(controllerParams, 'isViewMode').listen().onChange(() => {
         controllerParams.isRemoveMode = controllerParams.isViewMode ? 
         false: controllerParams.isRemoveMode;
@@ -144,6 +155,41 @@ function main() {
     });
     //gui.add(controllerParams, 'exportGLTF');
     
+    for(const key in cctvs){
+        crossMenu.push(cctvList.add(cctvs, key));
+    };
+
+    crossMenu.forEach(( control ) => {
+
+        control.classList1 = control.domElement.parentElement.parentElement.classList;
+        control.classList2 = control.domElement.previousElementSibling.classList;
+
+        control.setDisabled = function () {
+
+            control.classList1.add( 'no-pointer-events' );
+            control.classList2.add( 'control-disabled' );
+
+        };
+
+        control.setEnabled = function () {
+
+            control.classList1.remove( 'no-pointer-events' );
+            control.classList2.remove( 'control-disabled' );
+
+        };
+
+    } );
+
+    function updateCrossMenu(data) {
+
+        crossMenu.forEach( function ( control , idx) {
+            if(!data.cctv[idx].placement){
+                control.setEnabled();
+            } else {
+                control.setDisabled();
+            }
+        } );
+    }
     for(const key in params){
         floorList.add(params, key).listen().onChange(()=>{
             for(const key2 in params){
@@ -169,12 +215,6 @@ function main() {
     document.addEventListener( 'pointermove', onPointerMove, false );
     window.addEventListener( 'resize', onWindowResize );
 
-    function onWindowResize() {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize( window.innerWidth, window.innerHeight );
-    }
-
     const getSelectedFloor = () => {
         for (const key in params){
             if(params[key]===true){
@@ -185,6 +225,8 @@ function main() {
                         floorList.close();
                         controller.show();
                         controller.open();
+                        cctvList.show();
+                        cctvList.open();
                         controllerParams.isRemoveMode = false;
                         controllerParams.isViewMode = false;
                         controllerParams.isReplacementMode = false;
@@ -196,7 +238,7 @@ function main() {
         sliderPos = window.innerWidth;
         camera.position.set(0, 1000, 900);
     };
-
+    
     function onPointerUp( event ) {
         onUpPosition.x = event.clientX;
         onUpPosition.y = event.clientY;
@@ -204,7 +246,7 @@ function main() {
         // render();
         requestRenderIfNotRequested();
     }
-
+    
     function onPointerMove( event ) {
         if(controllerParams.isReplacementMode){
             event.preventDefault();   
@@ -212,21 +254,21 @@ function main() {
             pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
             raycaster.setFromCamera( pointer, camera );
             
-            const intersects = raycaster.intersectObjects( HelperObjects );
-        
-            if ( intersects.length > 0 ) {
+            const intersects = raycaster.intersectObjects( HelperObjects , true);
+            if ( intersects.length > 0  ) {
                 const intersect = intersects[ 0 ];
                 if ( intersect.object !== transformControl.object ) {
-                    transformControl.attach( intersect.object );
+                    transformControl.attach( intersect.object);
                 }   
             }  
         }else {
             controls.enabled = true;
         }
     }
-
+    
     function onPointerDown( event ) {
         event.preventDefault();
+        
         pointer.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
         raycaster.setFromCamera( pointer, camera );
         const intersects = raycaster.intersectObjects( HelperObjects );
@@ -235,6 +277,7 @@ function main() {
                 let child= sceneR.children[sceneR.children.length-1];
                 const intersect = intersects[ 0 ];     
                 // sceneR.remove( intersect.object );
+                intersect.object.device.placement = false;
                 child.remove( intersect.object );
                 HelperObjects.splice( HelperObjects.indexOf( intersect.object ), 1 );
             }
@@ -242,7 +285,7 @@ function main() {
             if ( intersects.length > 0 ) {
                 const intersect = intersects[ 0 ];
                 controls.enabled = false;
-                alert(intersect.object.deviceID);
+                alert(intersect.object.device);   // 여기가 팝업 또는 화면 분할해서 cctv 정보 제공 영역
             }
         } else {
             onDownPosition.x = event.clientX;
@@ -251,6 +294,12 @@ function main() {
         requestRenderIfNotRequested();
     }
 
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+    }
+    
     function requestRenderIfNotRequested() {
         if(!renderRequested) {
             renderRequested = true;
@@ -264,17 +313,19 @@ function main() {
         renderer.clear();
         renderer.setScissorTest( true );
         
-        for(const idx in sample.floors){
-            sample.floors[idx].scale.set(1,1,1);
-            sceneL.add(sample.floors[idx]);
-            
-        }
+        updateCrossMenu(cctvData);
         if(detailinfo !== undefined ){
             
             sample.floors[detailinfo].scale.set(10,10,10);
             sceneR.add(sample.floors[detailinfo]);
         } else {
+            for(const idx in sample.floors){
+                sample.floors[idx].scale.set(1,1,1);
+                sceneL.add(sample.floors[idx]);
+                
+            }
             controller.hide();
+            cctvList.hide();
         }
         
         controls.update();        
