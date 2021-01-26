@@ -6,22 +6,46 @@ import { OrbitControls } from './three.js/examples/jsm/controls/OrbitControls.js
 import { TransformControls } from './three.js/examples/jsm/controls/TransformControls.js';
 import { getSample, exportGLTF, getCCTV3d } from './sample3d.js';
 import { getCctvData } from './datacontroller.js'
+import { MinMaxGUIHelper, makeCamera, updateCamera } from './cameraController.js'
+// import { createText }  from './textController.js';
 
 
 function main() {
     
-    const raycaster = new THREE.Raycaster();  
+    const raycaster = new THREE.Raycaster(); 
     const pointer = new THREE.Vector2();  
     const onUpPosition = new THREE.Vector2();
     const onDownPosition = new THREE.Vector2(); 
     const HelperObjects = [];
-
+    const pickPosition = {x: 0, y: 0};
+    
     let transformControl;
     let renderRequested = false;
     let sliderPos = window.innerWidth;
     let detailinfo;
-    let cctvID=1;  // 임시 test 
+    let pickedObject = null;
+    let pickedObjectSavedColor =0;
+    let textFont, textMesh, textGeo = null;
+    let text = "";
+    let hover = 0;
+    
+    let savedTextMesh=null;
 
+   
+    function loadFont() {
+        
+        const loader = new THREE.FontLoader();
+        loader.load( './three.js/examples/fonts/Helvetiker_bold.typeface.json', function ( response ) {
+            
+            textFont = response;
+            // console.log(textFont);
+        } );
+    }
+    
+    loadFont();
+    
+    // let textMesh, textGeo, textmMaterials;
+    // let text = "three.js";
     const canvas =document.querySelector('.container'); 
     const renderer = new THREE.WebGLRenderer({
         // canvas:canvas,
@@ -31,15 +55,10 @@ function main() {
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize(window.innerWidth, window.innerHeight);
     canvas.appendChild( renderer.domElement);
-    const makeCamera = (fov=75) => {
-        const aspect =2;
-        const zNear = 0.1;
-        const zFar = 8000;
-        return new THREE.PerspectiveCamera(fov, aspect, zNear, zFar);
-    }
     const camera = makeCamera();
-    camera.position.set(0, 1000, 900)
-    camera.lookAt(0,0,0);
+    camera.position.set(-150, 780, 1650);
+    camera.lookAt(-150,680,680);
+    
     
     {
         const light = new THREE.DirectionalLight(0xffffff,1);
@@ -48,12 +67,15 @@ function main() {
     }
     
     const controls = new OrbitControls(camera, canvas);
-    controls.target.set(0,50,-20);
+    controls.target.set(0,520,-50);
     controls.minPolarAngle = 0;
     controls.maxPolarAngle = Math.PI / 2;
     controls.enableDamping=true;
-    controls.addEventListener('change', requestRenderIfNotRequested);
-    
+    controls.addEventListener('change', () => {
+        fadeOut();
+        requestRenderIfNotRequested();
+    });
+ 
     const sceneL = new THREE.Scene();  
     const sceneR = new THREE.Scene();  
     { 
@@ -83,17 +105,17 @@ function main() {
     
     const sample = getSample();  // renader 부분에서 뒤늦게 건물을 띄워서 그런거 같다. 참고 . 
     sceneL.add(sample.sample);
-  
     sceneL.background = new THREE.Color('black');
     sceneR.background = new THREE.Color('black');
     const addObject = (data) => {
         const deviceGeometry = new THREE.BoxBufferGeometry( 10, 10, 10 );
-        const deviceMaterial = new THREE.MeshBasicMaterial( {color:0xDC143C });
+        const deviceMaterial = new THREE.MeshPhongMaterial( {color:0xDC143C });
         const object = new THREE.Mesh( deviceGeometry, deviceMaterial);
         object.rotation.y = 3.0;
         let child= sceneR.children[sceneR.children.length-1];
+        console.log(sceneR);
         object.position.x = ((Math.random() * 1400) % 100);
-        object.position.y = child.position.y + 40;
+        object.position.y = 35;
         object.position.z = 0;
         
         object.device = data;
@@ -130,7 +152,7 @@ function main() {
 
     let params = {};
     sample.floors.map((floor, idx)=> {
-        const name = "floor" + (idx+1);
+        const name = floor.name;
         params = { ...params,
             [name]:false,
         };
@@ -200,7 +222,7 @@ function main() {
                 }
             } 
             detailinfo = getSelectedFloor();
-            requestRenderIfNotRequested();
+            //requestRenderIfNotRequested();
         });
     };
 
@@ -216,6 +238,10 @@ function main() {
     document.addEventListener( 'pointerup', onPointerUp, false );
     document.addEventListener( 'pointermove', onPointerMove, false );
     window.addEventListener( 'resize', onWindowResize );
+    window.addEventListener( 'mouseout',() => {
+        clearPickPosition();
+        requestRenderIfNotRequested();
+    });
 
     const getSelectedFloor = () => {
         for (const key in params){
@@ -238,7 +264,7 @@ function main() {
             }
         }
         sliderPos = window.innerWidth;
-        camera.position.set(0, 1000, 900);
+        camera.position.set(-150, 780, 1650);
     };
     
     function onPointerUp( event ) {
@@ -246,10 +272,38 @@ function main() {
         onUpPosition.y = event.clientY;
         if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) transformControl.detach();
         // render();
+        controls.update();        
         requestRenderIfNotRequested();
     }
-    
+
+    function createText() {
+        textGeo = new THREE.TextGeometry( text, {
+            font: textFont,
+            size: 60,
+            height: 20,
+            curveSegments: 4,
+            bevelThickness: 2,
+            bevelSize: 1.5,
+            bevelEnabled: true
+        } );
+        textGeo.computeBoundingBox();
+        const materials = [
+            new THREE.MeshPhongMaterial( { color: 0x00008B, flatShading: true } ), // front
+            new THREE.MeshPhongMaterial( { color: 0x00008B } ) // side
+        ];
+        textMesh = new THREE.Mesh( textGeo, materials );
+        // console.log("camera.position.x :", camera.position.x ,
+        // "camera.position.y :", camera.position.y, "camera.position.x :", camera.position.z  )
+        textMesh.position.x = -50;
+        textMesh.position.y = 800;
+        textMesh.position.z = -20;
+        textMesh.rotation.x = camera.rotation.x;
+        textMesh.rotation.y = camera.rotation.y;
+        textMesh.rotation.z = camera.rotation.z;
+    }
+        
     function onPointerMove( event ) {
+        setPickPosition(event);
         if(controllerParams.isReplacementMode){
             event.preventDefault();   
             pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
@@ -263,9 +317,29 @@ function main() {
                     transformControl.attach( intersect.object);
                 }   
             }  
-        }else {
+        }else {  // material이 같으면 색깔로 타게팅 대상을 식별하는 건 불가능 하다.
+            if(sliderPos === window.innerWidth){
+                event.preventDefault();   
+                pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+                pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+                
+                sceneL.remove(textMesh);
+                
+                raycaster.setFromCamera( pointer, camera );
+                const intersectedObjects = raycaster.intersectObjects(sample.floors,true);
+                
+                if (intersectedObjects.length) {
+                    pickedObject = intersectedObjects[0].object;
+                    const pickedFloor = pickedObject.parent.name; 
+                    text=pickedFloor;
+                    hover = pickedObject.parent.position.y + 20;
+                    createText();
+                    sceneL.add(textMesh);
+                }
+                requestRenderIfNotRequested();
+            } 
             controls.enabled = true;
-        }
+        } 
     }
     
     function onPointerDown( event ) {
@@ -289,10 +363,34 @@ function main() {
                 const intersect = intersects[ 0 ];
                 controls.enabled = false;
                 alert(intersect.object.device);   // 여기가 팝업 또는 화면 분할해서 cctv 정보 제공 영역
+                console.log(intersect.object.device);   // 여기가 팝업 또는 화면 분할해서 cctv 정보 제공 영역
             }
         } else {
             onDownPosition.x = event.clientX;
             onDownPosition.y = event.clientY;
+            
+            if(sliderPos === window.innerWidth){
+                event.preventDefault();   
+                pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+                pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+                raycaster.setFromCamera( pointer, camera );
+                const intersectedObjects = raycaster.intersectObjects(sample.floors,true);
+                if (intersectedObjects.length) {
+                    pickedObject = intersectedObjects[0].object;
+                    const pickedFloor = pickedObject.parent.name; 
+                    console.log("picked object is here", pickedFloor,pickedObject);
+                    text=pickedFloor;
+                    hover = pickedObject.parent.position.y + 20;
+                    controls.target.set(20, hover, -50);
+                    controls.update();
+                    // params[text]=true;
+                    // detailinfo = getSelectedFloor();
+                }
+                console.log("camera :", camera );
+                //control.target.set()
+                requestRenderIfNotRequested();
+            }   
+
         }
         requestRenderIfNotRequested();
     }
@@ -310,33 +408,74 @@ function main() {
         }
     }
 
-    function render() {
-        renderRequested = false; 
+    function setPickPosition(event) {
+        const pos = getCanvasRelativePosition(event);
+        pickPosition.x = (pos.x / window.innerWidth ) * 2 - 1;
+        pickPosition.y = (pos.y /window.innerHeight) * -2 + 1;
+    }
+    
+    function clearPickPosition() {
+        pickPosition.x = -100000;
+        pickPosition.y = -100000;
+    }
+
+    function getCanvasRelativePosition(event) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: (event.clientX - rect.left) * window.innerWidth /rect.width,
+            y: (event.clientY - rect.top) * window.innerHeight / rect.height,
+        };
+    }
+
+    const fadeOut = ()=>{
+        let cameraP = [camera.position.x < 0 ? -1 * camera.position.x : camera.position.x,
+            camera.position.y < 0 ? -1 * camera.position.y : camera.position.y,
+            camera.position.z < 0 ? -1 * camera.position.z : camera.position.z];
+        cameraP.forEach( (position) => {
+            
+            console.log(params['detailinfo']);
+            if(camera.far < position) {
+                params[detailinfo]=false;
+                console.log(params['detailinfo']);
+                getSelectedFloor();
+                sliderPos = window.innerWidth;
+                camera.position.set(-150, 780, 1650);
+                requestRenderIfNotRequested()
+            }  
+        });
+            
+    }
+
+    clearPickPosition();
+
+    function render(time) {
+        renderRequested = false;
+        // console.log(pointer.x, pointer.y);
+        //console.log("camera position", camera.position);
         renderer.setScissorTest( false );
         renderer.clear();
         renderer.setScissorTest( true );
         
         updateCrossMenu(cctvData);
+        for(const idx in sample.floors){
+            sample.floors[idx].scale.set(1,1,1);
+            sceneL.add(sample.floors[idx]);  
+        }
         if(detailinfo !== undefined ){
             
             sample.floors[detailinfo].scale.set(10,10,10);
-            sceneR.add(sample.floors[detailinfo]);
+            sceneR.add(sample.floors[detailinfo]); 
+            
         } else {
-            for(const idx in sample.floors){
-                sample.floors[idx].scale.set(1,1,1);
-                sceneL.add(sample.floors[idx]);
-                
-            }
             controller.hide();
             cctvList.hide();
         }
         
-        controls.update();        
+        
         renderer.setScissor(0,0, sliderPos, window.innerHeight);
         renderer.render(sceneL, camera);
         renderer.setScissor(sliderPos, 0, window.innerWidth, window.innerHeight);
         renderer.render(sceneR, camera);
-        
     }
     requestRenderIfNotRequested();
 }

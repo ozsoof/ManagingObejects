@@ -39,31 +39,31 @@ export const getSample = () => {
 
     const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
     groundMesh.rotation.x = Math.PI * -.5;
+    groundMesh.rotation.z = Math.PI * -0.035;
+    
     groundMesh.receiveShadow = false;
-
     ground.add(groundMesh);
     sample.add(ground);
     const sideGeometry = new THREE.BoxBufferGeometry(300, 20, 5); 
-    const sideMaterial = new THREE.MeshBasicMaterial({
+    const sideMaterial = new THREE.MeshPhongMaterial({
         // color: 0x000080,
         opacity: 0.4, 
         transparent: true,
         map: windowTexture, 
     });
     const side2Geometry = new THREE.BoxBufferGeometry(5, 20, 255); 
-    const side2Material = new THREE.MeshBasicMaterial({
+    const side2Material = new THREE.MeshPhongMaterial({
         // color: 0x000080,
         opacity: 0.4, 
         transparent: true,
         map: sidesTexture, 
     });
     const layerGeometry = new THREE.BoxBufferGeometry(300,5,250);
-    const layerMaterial = new THREE.MeshBasicMaterial({
-        //color: 0x000080,
+    const layerMaterial = new THREE.MeshPhongMaterial({
         color: 0x708090,
-        opacity: 0.6, 
+        opacity: 0.5, 
         transparent: true,
-        map: sidesTexture, 
+        map: windowTexture, 
     });
     
     let i;
@@ -71,7 +71,7 @@ export const getSample = () => {
     //1 floor
     const floor1 = new THREE.Object3D();
     const floor1Geometry = new THREE.BoxBufferGeometry(200, 20, 1); 
-    const floor1Material = new THREE.MeshBasicMaterial({
+    const floor1Material = new THREE.MeshPhongMaterial({
         //color: 0xffffff,
         opacity: 0.7, 
         transparent: true,
@@ -90,7 +90,7 @@ export const getSample = () => {
     floor1backMesh.position.x = 20;
     floor1backMesh.position.z = -200;
     floor1backMesh.rotation.y = 3.0;
-    const floor1sideMaterial = new THREE.MeshBasicMaterial({
+    const floor1sideMaterial = new THREE.MeshPhongMaterial({
         //color: 0xffffff,
         opacity: 0.7, 
         transparent: true,
@@ -122,7 +122,7 @@ export const getSample = () => {
     floor1rightbackMesh.rotation.y = 3.0;
     
     
-    const floor1centerMaterial = new THREE.MeshBasicMaterial({
+    const floor1centerMaterial = new THREE.MeshPhongMaterial({
         color: 0xA0522D,
         opacity: 0.5, 
         transparent: true,
@@ -165,7 +165,7 @@ export const getSample = () => {
     
     // pillar
     const pillarGeometry = new THREE.BoxBufferGeometry(10, 20, 10); 
-    const pillarMaterial = new THREE.MeshBasicMaterial({
+    const pillarMaterial = new THREE.MeshPhongMaterial({
         opacity: 0.7, 
         transparent: true,
         map: pillarTexture, 
@@ -253,7 +253,7 @@ export const getSample = () => {
     
     //entrance roof  
     const entranceGeometry = new THREE.BoxBufferGeometry(175, 4, 40); 
-    const entranceMaterial = new THREE.MeshBasicMaterial({
+    const entranceMaterial = new THREE.MeshPhongMaterial({
         opacity: 0.8, 
         transparent: true,
         map: pillarTexture, 
@@ -280,7 +280,7 @@ export const getSample = () => {
         Math.PI * 2,
         Math.PI * 2,
     );
-    const doorMaterial = new THREE.MeshBasicMaterial({
+    const doorMaterial = new THREE.MeshPhongMaterial({
         // color: 0xDAA520,
         color: 0xFFD700,
         opacity: 0.8, 
@@ -315,7 +315,7 @@ export const getSample = () => {
     door6Mesh.position.z = -208;
     //frontCI
     const frontGeometry = new THREE.BoxBufferGeometry(30, 10, 2); 
-    const frontMaterial = new THREE.MeshBasicMaterial({
+    const frontMaterial = new THREE.MeshPhongMaterial({
         color: 0xffffff,
         // opacity: 1, 
         // transparent: true,
@@ -367,7 +367,7 @@ export const getSample = () => {
     floor1.add(floor1center3Mesh);
     floor1.add(floor1center4Mesh);
     
-    floor1.name = "floor1"
+    floor1.name = "1 floor"
     floors.push(floor1);
 
     for(i=0; i< 35; i++){
@@ -409,7 +409,7 @@ export const getSample = () => {
         floor.add(block3_Mesh);
         floor.add(block4_Mesh);
         floor.add(layerMesh);
-        floor.name="floor"+(i+2);
+        floor.name=(i+2)+" floor";
         floors.push(floor);   // gui로 관리 목적
         sample.add(floor);
     }
@@ -421,7 +421,7 @@ export const getSample = () => {
     layerMesh.rotation.y = 3.0;
     //roof
     const roofGeometry = new THREE.BoxBufferGeometry(200, 40, 150); 
-    const roofMaterial = new THREE.MeshBasicMaterial({
+    const roofMaterial = new THREE.MeshPhongMaterial({
         //color: 0xffffff,
         opacity: 0.7, 
         transparent: true,
@@ -436,7 +436,7 @@ export const getSample = () => {
     roofMesh.position.z = -120;
     roofMesh.rotation.y = 3.0;
     const ciGeometry = new THREE.BoxBufferGeometry(20, 20, 1); 
-    const ciMaterial = new THREE.MeshBasicMaterial({
+    const ciMaterial = new THREE.MeshPhongMaterial({
         // color: 0x000080,
         // opacity: 0.7, 
         // transparent: true,
@@ -455,7 +455,7 @@ export const getSample = () => {
     floor.add(roofMesh);
     floor.add(ciMesh);
     floor.add(layerMesh);
-    floor.name="floor"+(i+2);
+    // floor.name="roof";
     floors.push(floor);
     sample.add(floor1);
     sample.add(floor);
