@@ -304,7 +304,6 @@ function main() {
         planeTextMesh.position.x = -110;
         planeTextMesh.rotation.x = Math.PI * -.5;
         planeTextMesh.rotation.z =  Math.PI * -0.035;
-        console.log(" detail in set PlaneText :", sample.floors[idx]);
         sample.floors[idx].add(planeTextMesh);
     }
 
@@ -390,12 +389,15 @@ function main() {
                 HelperObjects.splice( HelperObjects.indexOf( intersect.object ), 1 );
             }
         } else if (controllerParams.isViewMode){
-            console.log("여기 안옴/ ?");
             if ( intersects.length > 0 ) {
                 const intersect = intersects[ 0 ];
                 controls.enabled = false;
-                alert(intersect.object.device);   // 여기가 팝업 또는 화면 분할해서 cctv 정보 제공 영역
-                console.log(intersect.object.device);   // 여기가 팝업 또는 화면 분할해서 cctv 정보 제공 영역
+                console.log(intersect.object.device);
+                alert("Device Information \n"+ "ID : " + intersect.object.device.camera_no + '\n' + 
+                    "type : "+ intersect.object.device.camera_no + '\n' +
+                    "installed on : "+ intersect.object.device.location + '\n' +
+                    "operated from  : "+ intersect.object.device.from);   
+                // console.log(intersect.object.device);   // 여기가 팝업 또는 화면 분할해서 cctv 정보 제공 영역
             }
         } else {
             onDownPosition.x = event.clientX;
@@ -528,7 +530,6 @@ function main() {
             
             sample.floors[detailinfo].scale.set(3,3,3);
             sceneR.add(sample.floors[detailinfo]); 
-            console.log("before Scene " ,sceneR);
             setPlaneText(detailinfo);
             
         } else {
