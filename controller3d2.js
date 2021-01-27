@@ -54,7 +54,7 @@ function main() {
     }
     const camera = makeCamera();
     const cameraHelper = new THREE.CameraHelper(camera);
-   
+  
     class MinMaxGUIHelper {
         constructor(obj, minProp, maxProp, minDif) {
             this.obj = obj;
@@ -138,6 +138,7 @@ function main() {
         sceneR.add(light.clone());
     }
     
+    sceneL.add(cameraHelper);
     const sample = getSample();  // renader 부분에서 뒤늦게 건물을 띄워서 그런거 같다. 참고 . 
     sceneL.add(sample.sample);
   

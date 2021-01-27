@@ -34,6 +34,7 @@ export const getSample = () => {
     helper.position.y = 1;
     helper.material.opacity = 0.2;
     helper.material.transparent = true;
+    helper.rotation.y = 3;
     // sample.add(helper);
     sample.add(helper);
 
@@ -367,7 +368,7 @@ export const getSample = () => {
     floor1.add(floor1center3Mesh);
     floor1.add(floor1center4Mesh);
     
-    floor1.name = "1 floor"
+    floor1.name = "1 F"
     floors.push(floor1);
 
     for(i=0; i< 35; i++){
@@ -409,7 +410,7 @@ export const getSample = () => {
         floor.add(block3_Mesh);
         floor.add(block4_Mesh);
         floor.add(layerMesh);
-        floor.name=(i+2)+" floor";
+        floor.name=(i+2)+" F";
         floors.push(floor);   // gui로 관리 목적
         sample.add(floor);
     }
