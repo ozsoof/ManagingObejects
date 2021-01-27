@@ -456,7 +456,7 @@ export const getSample = () => {
     floor.add(roofMesh);
     floor.add(ciMesh);
     floor.add(layerMesh);
-    // floor.name="roof";
+    floor.name="roof";
     floors.push(floor);
     sample.add(floor1);
     sample.add(floor);

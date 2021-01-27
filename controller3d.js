@@ -28,7 +28,7 @@ function main() {
     let pickedObjectSavedColor =0;
     let textFont, textMesh, textGeo, planeTextMesh = null;
     let text , planeText ="";
-    let hover = 0;
+    let hover = 520;
     let floorPositionHelper=[];
 
     let savedTextMesh=null;
@@ -59,7 +59,7 @@ function main() {
     canvas.appendChild( renderer.domElement);
     const camera = makeCamera();
     camera.position.set(-150, 780, 1650);
-    camera.lookAt(-150,680,680);
+    // camera.lookAt(20,520,-50);
     
     
     {
@@ -69,12 +69,14 @@ function main() {
     }
     
     const controls = new OrbitControls(camera, canvas);
-    controls.target.set(0,520,-50);
+    controls.target.set(20,520,-50);
     controls.minPolarAngle = 0;
     controls.maxPolarAngle = Math.PI / 2;
     controls.enableDamping=true;
+    controls.update();
     controls.addEventListener('change', () => {
         resetFadeout();
+        moveToFocusedOn();
 
         // console.log("camera :",camera.position);
         requestRenderIfNotRequested();
@@ -157,9 +159,11 @@ function main() {
     let params = {};
     sample.floors.map((floor, idx)=> {
         const name = floor.name;
-        params = { ...params,
-            [name]:false,
-        };
+        if(name !== "roof"){
+            params = { ...params,
+                [name]:false,
+            };
+        }   
     });
     
     //controller.add(controllerParams, 'createObject');
@@ -251,10 +255,10 @@ function main() {
         for (const key in params){
             if(params[key]===true){
                 sliderPos = 0;
-                camera.position.set(-2889,372, -3195);
                 for (const idx in sample.floors){
                     if (sample.floors[idx].name === key){
-                        camera.position.set(-440, 3600 + (idx * 20),-4275);
+                        camera.position.set(-50, sample.floors[idx].position.y+ 300, 550);
+                        controls.target.set(60, (hover)+20, -150);
                         floorList.close();
                         controller.show();
                         controller.open();
@@ -270,14 +274,13 @@ function main() {
         }
         sliderPos = window.innerWidth;
         camera.position.set(-150, 780, 1650);
+        controls.target.set(20, 520, -50);
     };
     
     function onPointerUp( event ) {
         onUpPosition.x = event.clientX;
         onUpPosition.y = event.clientY;
-        if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) transformControl.detach();
-        // render();
-        controls.update();        
+        if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) transformControl.detach();    
         requestRenderIfNotRequested();
     }
 
@@ -301,9 +304,6 @@ function main() {
         planeTextMesh.position.x = -110;
         planeTextMesh.rotation.x = Math.PI * -.5;
         planeTextMesh.rotation.z =  Math.PI * -0.035;
-        // sceneR 카메라 시점 조정용 주석
-        //controls.target.set(sample.floors[idx].position.x, sample.floors[idx].position.y, sample.floors[idx].position.z);
-        // controls.update();
         console.log(" detail in set PlaneText :", sample.floors[idx]);
         sample.floors[idx].add(planeTextMesh);
     }
@@ -325,8 +325,6 @@ function main() {
             new THREE.MeshPhongMaterial( { color: 0x00008B } ) // side
         ];
         textMesh = new THREE.Mesh( textGeo, materials );
-        // console.log("camera.position.x :", camera.position.x ,
-        // "camera.position.y :", camera.position.y, "camera.position.x :", camera.position.z  )
         textMesh.position.x = -50;
         textMesh.position.y = 800;
         textMesh.position.z = -20;
@@ -392,6 +390,7 @@ function main() {
                 HelperObjects.splice( HelperObjects.indexOf( intersect.object ), 1 );
             }
         } else if (controllerParams.isViewMode){
+            console.log("여기 안옴/ ?");
             if ( intersects.length > 0 ) {
                 const intersect = intersects[ 0 ];
                 controls.enabled = false;
@@ -411,17 +410,11 @@ function main() {
                 if (intersectedObjects.length) {
                     pickedObject = intersectedObjects[0].object;
                     const pickedFloor = pickedObject.parent.name;
-                    // console.log("picked object is here", pickedFloor,pickedObject);
                     text=pickedFloor;
                     hover = pickedObject.parent.position.y + 20;
                     controls.target.set(20, hover, -50);
                     controls.update();
-                    
-                    // params[text]=true;
-                    // detailinfo = getSelectedFloor();
                 }
-                //console.log("camera :", camera );
-                //control.target.set()
             }   
 
         }
@@ -466,23 +459,25 @@ function main() {
             camera.position.z < 0 ? -1 * camera.position.z : camera.position.z];
         cameraP.forEach( (position) => {
             
-            // console.log(params[detailinfo]);
             if(camera.far < position) {
-                params[detailinfo]=false;
-                // console.log(params[detailinfo]);
+                detailinfo = undefined;
                 getSelectedFloor();
                 sliderPos = window.innerWidth;
                 camera.position.set(-150, 780, 1650);
-                requestRenderIfNotRequested()
+                controls.target.set(20, 520, -50);
+                controls.update();
+                params[planeText]=false;
+                requestRenderIfNotRequested();
             }  
         });
             
     }
 
-    const setZoomIn = ()=>{
+    const moveToFocusedOn = ()=>{
         
         let isSetSceneR = false;
-        if ( camera.position.x <  150 && camera.position.x > 40 ) {
+        // let focusedOnIdx = undefined;
+        if ( camera.position.x <  150 && camera.position.x > -150 ) {
             if( camera.position.y < 750 && camera.position.y > 0) { 
                 if( camera.position.z < 40 && camera.position.z > -200)
                 { 
@@ -490,26 +485,35 @@ function main() {
                 }
             }
         }
-        
-        // console.log(params[detailinfo]);
         if(isSetSceneR) {
-            //params[detailinfo]=false;
-            // console.log(params[detailinfo]);
-            getSelectedFloor();
-            sliderPos = 0;
-            
-            requestRenderIfNotRequested()
-        }  
-
-            
+            //text 에 저장되어 있음 . floor 이름이, 이 이름으로 idx 를 찾고 , idx 로 ㄱ ㄱ해야지
+            for (const idx in sample.floors){
+                if (sample.floors[idx].name === text){
+                    floorList.close();
+                    controller.show();
+                    controller.open();
+                    cctvList.show();
+                    cctvList.open();
+                    controllerParams.isRemoveMode = false;
+                    controllerParams.isViewMode = false;
+                    controllerParams.isReplacementMode = false;
+                    camera.position.set(-50, sample.floors[idx].position.y+ 300, 550);
+                    controls.target.set(60, (hover)+20, -150);
+                    controls.update();
+                    sliderPos = 0;
+                    detailinfo = idx;
+                    break;
+                }
+            }
+            params[text] = true;
+            requestRenderIfNotRequested();
+        }   
     }
 
     clearPickPosition();
 
     function render(time) {
         renderRequested = false;
-        // console.log(pointer.x, pointer.y);
-        //console.log("camera position", camera.position);
         renderer.setScissorTest( false );
         renderer.clear();
         renderer.setScissorTest( true );
@@ -517,23 +521,20 @@ function main() {
         updateCrossMenu(cctvData);
         for(const idx in sample.floors){
             sample.floors[idx].scale.set(1,1,1);
+            sample.floors[idx].remove(planeTextMesh);
             sceneL.add(sample.floors[idx]);  
         }
         if(detailinfo !== undefined ){
             
-            sample.floors[detailinfo].scale.set(5,5,5);
-            // floorPositionHelper[]
-            console.log("before Scene " ,sample.floors[detailinfo]);
-            // sample.floor[detailinfo]
+            sample.floors[detailinfo].scale.set(3,3,3);
             sceneR.add(sample.floors[detailinfo]); 
+            console.log("before Scene " ,sceneR);
             setPlaneText(detailinfo);
-            // camera.position.set(-4760,2182, 2200);
-            
             
         } else {
             controller.hide();
             cctvList.hide();
-            controls.target.set(20, hover, -50);
+            // controls.target.set(20, hover, -50);
         }
         
         
