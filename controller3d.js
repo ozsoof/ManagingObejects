@@ -28,7 +28,7 @@ function main() {
     let pickedObjectSavedColor =0;
     let textFont, textMesh, textGeo, planeTextMesh = null;
     let text , planeText ="";
-    let hover = 520;
+    let hover = 300;
     let floorPositionHelper=[];
 
     let savedTextMesh=null;
@@ -58,7 +58,8 @@ function main() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     canvas.appendChild( renderer.domElement);
     const camera = makeCamera();
-    camera.position.set(-150, 780, 1650);
+    camera.position.set(-1252, 300, 1139);
+    
     // camera.lookAt(20,520,-50);
     
     
@@ -69,7 +70,7 @@ function main() {
     }
     
     const controls = new OrbitControls(camera, canvas);
-    controls.target.set(20,520,-50);
+    controls.target.set(20,hover,-50);
     controls.minPolarAngle = 0;
     controls.maxPolarAngle = Math.PI / 2;
     controls.enableDamping=true;
@@ -78,7 +79,7 @@ function main() {
         resetFadeout();
         moveToFocusedOn();
 
-        // console.log("camera :",camera.position);
+        console.log("camera :",camera.position,hover);
         requestRenderIfNotRequested();
     });
  
@@ -274,7 +275,8 @@ function main() {
             }
         }
         sliderPos = window.innerWidth;
-        camera.position.set(-150, 780, 1650);
+        // camera.position.set(-150, 780, 1650);
+        camera.position.set(-1252, 300, 1139);
         controls.target.set(20, 520, -50);
     };
     
@@ -392,7 +394,7 @@ function main() {
             if ( intersects.length > 0 ) {
                 const intersect = intersects[ 0 ];
                 controls.enabled = false;
-                console.log(intersect.object.device);
+                // console.log(intersect.object.device);
                 alert("Device Information \n"+ "ID : " + intersect.object.device.camera_no + '\n' + 
                     "type : "+ intersect.object.device.camera_no + '\n' +
                     "installed on : "+ intersect.object.device.location + '\n' +
@@ -465,7 +467,8 @@ function main() {
                 detailinfo = undefined;
                 getSelectedFloor();
                 sliderPos = window.innerWidth;
-                camera.position.set(-150, 780, 1650);
+                // camera.position.set(-150, 780, 1650);
+                camera.position.set(-1252, 300, 1139);
                 controls.target.set(20, 520, -50);
                 controls.update();
                 params[planeText]=false;
