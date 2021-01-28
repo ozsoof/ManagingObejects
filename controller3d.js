@@ -18,8 +18,6 @@ function main() {
     const onDownPosition = new THREE.Vector2(); 
     const HelperObjects = [];
     const pickPosition = {x: 0, y: 0};
-    
-
     let transformControl;
     let renderRequested = false;
     let sliderPos = window.innerWidth;
@@ -30,15 +28,15 @@ function main() {
     let text , planeText ="";
     let hover = 300;
     let floorPositionHelper=[];
-
+    let pickedFloor ={};
+    
     let savedTextMesh=null;
 
-   
+    THREE.Cache.enabled = true;
     function loadFont() {
         
         const loader = new THREE.FontLoader();
         loader.load( './three.js/examples/fonts/Helvetiker_bold.typeface.json', function ( response ) {
-            
             textFont = response;
             // console.log(textFont);
         } );
@@ -362,8 +360,8 @@ function main() {
                 
                 if (intersectedObjects.length) {
                     pickedObject = intersectedObjects[0].object;
-                    const pickedFloor = pickedObject.parent.name; 
-                    text=pickedFloor;
+                    const pickedFloor2 = pickedObject.parent.name; 
+                    text=pickedFloor2;
                     hover = pickedObject.parent.position.y + 20;
                     createText();
                     sceneL.add(textMesh);
@@ -413,7 +411,7 @@ function main() {
                 const intersectedObjects = raycaster.intersectObjects(sample.floors,true);
                 if (intersectedObjects.length) {
                     pickedObject = intersectedObjects[0].object;
-                    const pickedFloor = pickedObject.parent.name;
+                    pickedFloor = pickedObject.parent.name;
                     text=pickedFloor;
                     hover = pickedObject.parent.position.y + 20;
                     controls.target.set(20, hover, -50);
@@ -493,7 +491,7 @@ function main() {
         if(isSetSceneR) {
             //text 에 저장되어 있음 . floor 이름이, 이 이름으로 idx 를 찾고 , idx 로 ㄱ ㄱ해야지
             for (const idx in sample.floors){
-                if (sample.floors[idx].name === text){
+                if (sample.floors[idx].name === pickedFloor){
                     floorList.close();
                     controller.show();
                     controller.open();
@@ -510,7 +508,7 @@ function main() {
                     break;
                 }
             }
-            params[text] = true;
+            params[pickedFloor] = true;
             requestRenderIfNotRequested();
         }   
     }
