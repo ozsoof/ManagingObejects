@@ -242,7 +242,8 @@ function main() {
     } );
     sceneR.add( transformControl);
 
-    document.addEventListener( 'pointerdown', onPointerDown, false );
+    document.addEventListener( 'click', onPointerDown, false );
+    // document.addEventListener( 'pointerdown', onPointerDown, false );
     document.addEventListener( 'pointerup', onPointerUp, false );
     document.addEventListener( 'pointermove', onPointerMove, false );
     window.addEventListener( 'resize', onWindowResize );
@@ -288,7 +289,6 @@ function main() {
         const matLite = new THREE.MeshBasicMaterial( {
             color: 0x006699
         } );
-        console.log(" idx set in PlaneText : ",sample.floors[idx].name.length);
         planeText =  sample.floors[idx].name.length > 3 ? sample.floors[idx].name: " "+sample.floors[idx].name;
     
         const shapes = textFont.generateShapes( planeText , 90 );
